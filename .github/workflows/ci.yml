@@ -1,0 +1,119 @@
+# Etapa 1: integración continua.
+# Corre en cada push a development y en cada PR hacia qa o main.
+# Si algo falla, el PR hacia qa/main no se puede fusionar.
+name: CI
+
+on:
+  push:
+    branches: [development]
+  pull_request:
+    branches: [qa, main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  DOTNET_NOLOGO: true
+  DOTNET_CLI_TELEMETRY_OPTOUT: true
+
+jobs:
+  compilar-probar:
+    name: Compilar y probar
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-dotnet@v6
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Restaurar paquetes (incluye auditoría de vulnerabilidades NuGet)
+        run: dotnet restore Arrendia.sln
+
+      - name: Verificar formato y estilo
+        run: dotnet format Arrendia.sln --verify-no-changes --no-restore
+
+      - name: Compilar en Release (advertencias = errores)
+        run: dotnet build Arrendia.sln -c Release --no-restore -p:ContinuousIntegrationBuild=true
+
+      - name: Buscar paquetes con vulnerabilidades conocidas
+        run: |
+          dotnet list Arrendia.sln package --vulnerable --include-transitive 2>&1 | tee vulnerables.txt
+          if grep -qi "has the following vulnerable packages\|tiene los siguientes paquetes vulnerables" vulnerables.txt; then
+            echo "::error::Hay paquetes con vulnerabilidades conocidas"
+            exit 1
+          fi
+
+      - name: Ejecutar pruebas
+        run: >
+          dotnet test Arrendia.sln -c Release --no-build
+          --logger "trx;LogFileName=resultados.trx"
+          --collect:"XPlat Code Coverage"
+          --results-directory TestResults
+
+      - name: Guardar resultados de pruebas
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: resultados-pruebas
+          path: TestResults
+          retention-days: 14
+
+  secretos:
+    name: Buscar secretos
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Gitleaks (llaves, contraseñas y tokens en todo el historial)
+        uses: gitleaks/gitleaks-action@v3
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  imagen:
+    name: Imagen Docker
+    needs: compilar-probar
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Revisar el Dockerfile (Hadolint)
+        uses: hadolint/hadolint-action@v3.5.0
+        with:
+          dockerfile: deploy/Dockerfile
+
+      - uses: docker/setup-buildx-action@v4
+
+      - name: Construir la imagen
+        uses: docker/build-push-action@v7
+        with:
+          context: .
+          file: deploy/Dockerfile
+          push: false
+          load: true
+          tags: arrendia:${{ github.sha }}
+
+      - name: Escanear la imagen (Trivy)
+        uses: aquasecurity/trivy-action@v0.36.0
+        with:
+          image-ref: arrendia:${{ github.sha }}
+          severity: CRITICAL,HIGH
+          ignore-unfixed: true
+          exit-code: "1"
+
+      - name: Generar lista de componentes (SBOM)
+        uses: anchore/sbom-action@v0.24.3
+        with:
+          image: arrendia:${{ github.sha }}
+          format: spdx-json
+          artifact-name: sbom-arrendia.spdx.json

@@ -1,0 +1,3 @@
+-- Datos iniciales de Arrendia (catálogos, usuario Sistema, plantillas, etc.).
+-- Se ejecuta manualmente sobre una base de datos que ya tiene su estructura creada.
+-- La estructura (tablas, procedimientos, vistas) NO vive en este repositorio.
