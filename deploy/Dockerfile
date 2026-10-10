@@ -6,7 +6,6 @@ WORKDIR /src
 
 # Primero solo los archivos de proyecto, para aprovechar la caché de restore
 COPY global.json Directory.Build.props .editorconfig ./
-COPY src/Arrendia.Core/Arrendia.Core.csproj src/Arrendia.Core/
 COPY src/Arrendia.Web/Arrendia.Web.csproj src/Arrendia.Web/
 RUN dotnet restore src/Arrendia.Web/Arrendia.Web.csproj
 

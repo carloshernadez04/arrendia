@@ -12,8 +12,7 @@ Proyecto de Programación II (16S – G2), Universidad Doctor Andrés Bello, Reg
 ## Estructura
 
 ```
-src/Arrendia.Web     Aplicación ASP.NET Core MVC
-src/Arrendia.Core    Lógica y servicios
+src/Arrendia.Web     Aplicación ASP.NET Core MVC (Controllers, Models, Views, Services, Data)
 tests/Arrendia.Tests Pruebas
 seed/seed.sql        Datos iniciales (se ejecutan manualmente)
 deploy/              Dockerfile y archivos de despliegue

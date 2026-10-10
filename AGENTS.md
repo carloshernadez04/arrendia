@@ -45,8 +45,12 @@ Salida del inquilino, actas de entrada o salida, liquidación y devolución del 
 ## Estructura del repositorio
 
 ```
-src/Arrendia.Web       MVC: controladores, vistas, endpoints de webhooks y /health
-src/Arrendia.Core      Lógica y servicios (pagos, PDF, correo, integraciones)
+src/Arrendia.Web       Proyecto único ASP.NET Core MVC:
+  Controllers/         Reciben la petición y eligen la vista; deben quedar delgados
+  Models/              Datos que viajan a las vistas
+  Views/               Pantallas Razor
+  Services/            Reglas simples y servicios (PDF, correo, pagos en línea, Cloudinary)
+  Data/                Código C# que llama procedimientos almacenados y vistas por su nombre
 tests/Arrendia.Tests   Pruebas
 seed/seed.sql          Datos iniciales; se ejecuta manualmente
 deploy/                Dockerfile y required-db-objects.txt
@@ -57,10 +61,10 @@ compose.yaml           SQL Server + web en local, con volumen persistente (SQL e
 
 ## Reglas de base de datos (obligatorias)
 
-1. **La estructura de la base NO vive en este repositorio.** Nunca crear archivos de migraciones, scripts `CREATE TABLE` ni `CREATE PROCEDURE` en el repo. Solo existe `seed/seed.sql` con datos iniciales.
+1. **Ningún SQL de estructura ni de lógica vive en este repositorio.** Las tablas, vistas, funciones, triggers y procedimientos almacenados existen únicamente dentro de SQL Server. Nunca crees archivos `.sql` (salvo `seed/seed.sql`, que solo tiene datos iniciales), migraciones, scripts `CREATE`/`ALTER`, ni pegues el cuerpo de un procedimiento dentro de C# o de la documentación. En `Data/` solo va código C# que llama a un procedimiento o vista **por su nombre** y le pasa parámetros.
 2. **La lógica pesada va en SQL y la simple en C#:**
     - **Procedimientos almacenados:** generación de cobros, cálculo de mora, registro y aplicación de pagos, activación y cambio de condiciones de contratos, informes y consultas grandes, y todo lo que modifique varias tablas en una sola operación o deba ser atómico. Para estas operaciones la aplicación llama al procedimiento; no las rearma con varias consultas sueltas.
-    - **C# (`Arrendia.Core`):** validaciones de formularios y reglas simples (por ejemplo, que el monto sea mayor a 0 y no supere la deuda antes de enviarlo), formatos, cálculos de presentación y mantenimientos sencillos de catálogos (técnicos, conceptos, feriados) con consultas parametrizadas.
+    - **C# (`Services/` y `Data/` de `Arrendia.Web`):** validaciones de formularios y reglas simples (por ejemplo, que el monto sea mayor a 0 y no supere la deuda antes de enviarlo), formatos, cálculos de presentación y mantenimientos sencillos de catálogos (técnicos, conceptos, feriados) con consultas parametrizadas.
     - Si una regla simple también protege dinero, **se valida en los dos lados**: en C# para dar un mensaje rápido al usuario y en el procedimiento como garantía final.
 3. Todo objeto se escribe con su esquema: `dbo.Cargo`, `EXEC dbo.sp_RegistrarPago`.
 4. Si el código empieza a usar un procedimiento, vista o tabla nueva, **agrégalo a `deploy/required-db-objects.txt`**. El despliegue verifica que exista antes de publicar.
@@ -94,7 +98,7 @@ compose.yaml           SQL Server + web en local, con volumen persistente (SQL e
 
 - C# con `Nullable` activado y **advertencias tratadas como errores**: el código debe compilar sin una sola advertencia.
 - Los nombres del dominio van en español (`Cargo`, `Pago`, `Inquilino`, `ReglasPago`); los del framework se quedan como son.
-- Namespaces con alcance de archivo (`namespace Arrendia.Core.Pagos;`) y llaves siempre, aunque el `if` sea de una línea.
+- Namespaces con alcance de archivo (`namespace Arrendia.Web.Services;`) y llaves siempre, aunque el `if` sea de una línea.
 - No uses guion bajo en nombres de métodos públicos, incluidos los de las pruebas.
 - Toda regla de pagos o cobros nueva lleva **pruebas unitarias** que cubran los casos límite.
 - Antes de cada push: `dotnet format Arrendia.sln`, `dotnet build Arrendia.sln -c Release` y `dotnet test Arrendia.sln`.
@@ -152,7 +156,7 @@ docker compose down              # detiene sin borrar datos; NUNCA usar -v sin q
 
 ## Lo que nunca debes hacer
 
-- Crear la estructura de la base de datos dentro del repositorio.
+- Guardar SQL en el repositorio: estructura, procedimientos, vistas, migraciones o scripts (lo único permitido es `seed/seed.sql`).
 - Usar `float` o `double` para dinero.
 - Permitir pagos mayores a la deuda o crear saldo a favor.
 - Confirmar un pago sin el webhook validado.
