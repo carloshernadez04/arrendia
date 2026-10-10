@@ -29,6 +29,39 @@ dotnet format Arrendia.sln          # corrige el formato antes de hacer push
 dotnet run --project src/Arrendia.Web
 ```
 
+## Ejecutar en local con Docker
+
+Requiere [Docker Desktop](https://www.docker.com/products/docker-desktop/) abierto.
+
+1. Copia `.env.example` como `.env` y cambia la contraseña de SQL Server.
+2. Levanta todo:
+   ```bash
+   docker compose up -d --build
+   ```
+3. Abre la aplicación en <http://localhost:5080>. SQL Server queda en `localhost,1433` (usuario `sa`) para conectarte con SSMS.
+
+**Los datos no se pierden:** viven en el volumen `arrendia-sqldata` y se conservan al reiniciar la computadora, al hacer `docker compose down` o al reconstruir la web. Solo se borran con `docker compose down -v`, que **no** deben usar salvo que quieran empezar de cero.
+
+### Estructura de la base de datos
+
+La estructura (tablas, procedimientos y vistas) no vive en este repositorio. Para tenerla en local:
+
+1. Pide el respaldo más reciente (`.bak`) al responsable de la base y cópialo en la carpeta `db-local/`.
+2. En SSMS conéctate a `localhost,1433` y restaura el respaldo desde `/var/opt/mssql/backup/`.
+3. Si hace falta, carga los datos iniciales:
+   ```bash
+   docker exec arrendia-db /opt/mssql-tools18/bin/sqlcmd -C -S localhost -U sa -P "TU_CLAVE" -d Arrendia -i /seed/seed.sql
+   ```
+
+### Otros comandos
+
+| Comando | Para qué |
+|---|---|
+| `docker compose up -d db` | Levantar solo SQL Server y correr la web desde Visual Studio |
+| `docker compose up -d --build web` | Reconstruir la web después de cambiar código |
+| `docker compose logs -f web` | Ver los logs de la aplicación |
+| `docker compose down` | Detener todo (los datos se conservan) |
+
 ## Ramas
 
 | Rama          | Cómo se actualiza                                   |

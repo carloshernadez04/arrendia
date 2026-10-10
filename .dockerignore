@@ -7,3 +7,5 @@
 tests/
 seed/
 TestResults/
+db-local/
+.env
