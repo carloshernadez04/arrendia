@@ -58,7 +58,10 @@ compose.yaml           SQL Server + web en local, con volumen persistente (SQL e
 ## Reglas de base de datos (obligatorias)
 
 1. **La estructura de la base NO vive en este repositorio.** Nunca crear archivos de migraciones, scripts `CREATE TABLE` ni `CREATE PROCEDURE` en el repo. Solo existe `seed/seed.sql` con datos iniciales.
-2. Toda la lógica de dinero (cobros, mora, aplicación de pagos) vive en **procedimientos almacenados**. La aplicación nunca hace `INSERT`, `UPDATE` ni `DELETE` directos sobre tablas de cobros, pagos o contratos: llama al procedimiento.
+2. **La lógica pesada va en SQL y la simple en C#:**
+    - **Procedimientos almacenados:** generación de cobros, cálculo de mora, registro y aplicación de pagos, activación y cambio de condiciones de contratos, informes y consultas grandes, y todo lo que modifique varias tablas en una sola operación o deba ser atómico. Para estas operaciones la aplicación llama al procedimiento; no las rearma con varias consultas sueltas.
+    - **C# (`Arrendia.Core`):** validaciones de formularios y reglas simples (por ejemplo, que el monto sea mayor a 0 y no supere la deuda antes de enviarlo), formatos, cálculos de presentación y mantenimientos sencillos de catálogos (técnicos, conceptos, feriados) con consultas parametrizadas.
+    - Si una regla simple también protege dinero, **se valida en los dos lados**: en C# para dar un mensaje rápido al usuario y en el procedimiento como garantía final.
 3. Todo objeto se escribe con su esquema: `dbo.Cargo`, `EXEC dbo.sp_RegistrarPago`.
 4. Si el código empieza a usar un procedimiento, vista o tabla nueva, **agrégalo a `deploy/required-db-objects.txt`**. El despliegue verifica que exista antes de publicar.
 5. Consultas siempre **parametrizadas**. Prohibido concatenar texto del usuario en SQL.
