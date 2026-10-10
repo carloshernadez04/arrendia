@@ -19,6 +19,7 @@ WORKDIR /app
 ENV ASPNETCORE_HTTP_PORTS=8080 \
     DOTNET_RUNNING_IN_CONTAINER=true
 COPY --from=build /app/publish .
-USER $APP_UID
+# 1654 = usuario "app" sin privilegios de las imágenes oficiales de .NET
+USER 1654
 EXPOSE 8080
 ENTRYPOINT ["dotnet", "Arrendia.Web.dll"]
