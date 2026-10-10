@@ -15,7 +15,7 @@ services:
       MSSQL_PID: Developer
       MSSQL_SA_PASSWORD: ${MSSQL_SA_PASSWORD:?Define MSSQL_SA_PASSWORD en el archivo .env}
     ports:
-      - "${SQL_PORT:-1433}:1433"
+      - "${SQL_PORT:-14333}:1433"
     volumes:
       - arrendia-sqldata:/var/opt/mssql          # datos persistentes
       - ./db-local:/var/opt/mssql/backup         # carpeta para restaurar respaldos (.bak)

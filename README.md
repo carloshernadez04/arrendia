@@ -38,7 +38,7 @@ Requiere [Docker Desktop](https://www.docker.com/products/docker-desktop/) abier
    ```bash
    docker compose up -d --build
    ```
-3. Abre la aplicación en <http://localhost:5080>. SQL Server queda en `localhost,1433` (usuario `sa`) para conectarte con SSMS.
+3. Abre la aplicación en <http://localhost:5080>. SQL Server queda en `localhost,14333` (usuario `sa`) para conectarte con SSMS.
 
 **Los datos no se pierden:** viven en el volumen `arrendia-sqldata` y se conservan al reiniciar la computadora, al hacer `docker compose down` o al reconstruir la web. Solo se borran con `docker compose down -v`, que **no** deben usar salvo que quieran empezar de cero.
 
@@ -47,7 +47,7 @@ Requiere [Docker Desktop](https://www.docker.com/products/docker-desktop/) abier
 La estructura (tablas, procedimientos y vistas) no vive en este repositorio. Para tenerla en local:
 
 1. Pide el respaldo más reciente (`.bak`) al responsable de la base y cópialo en la carpeta `db-local/`.
-2. En SSMS conéctate a `localhost,1433` y restaura el respaldo desde `/var/opt/mssql/backup/`.
+2. En SSMS conéctate a `localhost,14333` y restaura el respaldo desde `/var/opt/mssql/backup/`.
 3. Si hace falta, carga los datos iniciales:
    ```bash
    docker exec arrendia-db /opt/mssql-tools18/bin/sqlcmd -C -S localhost -U sa -P "TU_CLAVE" -d Arrendia -i /seed/seed.sql
