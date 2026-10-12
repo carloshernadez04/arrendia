@@ -151,3 +151,32 @@ jobs:
           if [ "$ESTADO_JOB" = "success" ]; then TEXTO="Produccion desplegada"; else TEXTO="Falló el despliegue a producción"; fi
           curl -fsS -X POST -H 'Content-type: application/json' \
             --data "{\"text\":\"$TEXTO - ${GITHUB_SHA::7} - $GITHUB_ACTOR\"}" "$SLACK" || true
+
+  humo:
+    name: Pruebas de humo desde internet (producción)
+    needs: desplegar
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    environment: production
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: La aplicación responde por Cloudflare con sus encabezados de seguridad
+        run: deploy/scripts/humo.sh "${{ vars.APP_URL }}"
+
+  version:
+    name: Registrar la versión publicada
+    needs: humo
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: write
+    steps:
+      - name: Crear etiqueta y release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          VERSION="v$(TZ=America/El_Salvador date +%Y.%m.%d)-${GITHUB_SHA::7}"
+          gh release create "$VERSION" -R "$GITHUB_REPOSITORY" --target "$GITHUB_SHA" \
+            --title "Producción $VERSION" --generate-notes
+          echo "Versión publicada: $VERSION" >> "$GITHUB_STEP_SUMMARY"

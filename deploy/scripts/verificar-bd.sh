@@ -9,7 +9,7 @@ faltan=0
 while IFS= read -r obj; do
   obj="${obj%%#*}"; obj="$(echo "$obj" | xargs)"
   [ -z "$obj" ] && continue
-  existe=$(docker exec arrendia-sql /opt/mssql-tools18/bin/sqlcmd -C -S localhost -U sa -P "$SA" -d "$BD" -h -1 -W \
+  existe=$(docker exec -e SQLCMDPASSWORD="$SA" arrendia-sql /opt/mssql-tools18/bin/sqlcmd -C -S localhost -U sa -d "$BD" -h -1 -W \
     -Q "SET NOCOUNT ON; SELECT CASE WHEN OBJECT_ID(N'$obj') IS NULL THEN 0 ELSE 1 END" | tr -d '[:space:]')
   if [ "$existe" != "1" ]; then echo "::error::Falta en $BD: $obj"; faltan=$((faltan+1)); else echo "OK  $obj"; fi
 done < "$LISTA"

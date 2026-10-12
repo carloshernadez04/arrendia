@@ -1,0 +1,38 @@
+# Respaldo nocturno de las bases en el servidor. Se conservan los últimos 14 de cada una.
+name: Respaldo diario
+
+on:
+  schedule:
+    - cron: "0 8 * * *"   # 2:00 a. m. hora de El Salvador
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: base-de-datos
+  cancel-in-progress: false
+
+jobs:
+  respaldar:
+    name: Respaldar ArrendiaProd y ArrendiaQA
+    runs-on: [self-hosted, arrendia]
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Respaldar producción
+        run: deploy/scripts/respaldar-bd.sh ArrendiaProd
+
+      - name: Respaldar QA
+        run: deploy/scripts/respaldar-bd.sh ArrendiaQA
+
+      - name: Espacio en disco del servidor
+        run: |
+          USO=$(df --output=pcent "$HOME" | tail -1 | tr -dc '0-9')
+          du -sh "$HOME/apps/arrendia/respaldos"
+          echo "Disco al $USO %"
+          if [ "$USO" -ge 90 ]; then
+            echo "::error::El disco del servidor está al $USO %."
+            exit 1
+          fi
