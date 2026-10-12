@@ -28,11 +28,19 @@ jobs:
         with:
           ref: ${{ matrix.rama }}
 
+      - name: ¿La rama ya tiene el proyecto?
+        id: proyecto
+        run: |
+          if [ -f Arrendia.sln ]; then echo "existe=true" >> "$GITHUB_OUTPUT"
+          else echo "::notice::La rama ${{ matrix.rama }} todavía no tiene el proyecto; se omite."; fi
+
       - uses: actions/setup-dotnet@v6
+        if: steps.proyecto.outputs.existe == 'true'
         with:
           dotnet-version: 10.0.x
 
       - name: Paquetes NuGet vulnerables
+        if: steps.proyecto.outputs.existe == 'true'
         run: |
           dotnet restore Arrendia.sln
           dotnet list Arrendia.sln package --vulnerable --include-transitive 2>&1 | tee vulnerables.txt
@@ -42,6 +50,7 @@ jobs:
           fi
 
       - name: Escaneo del repositorio (Trivy)
+        if: steps.proyecto.outputs.existe == 'true'
         uses: aquasecurity/trivy-action@v0.36.0
         with:
           scan-type: fs
@@ -61,7 +70,7 @@ jobs:
       - name: Leer la imagen de cada ambiente
         id: datos
         run: |
-          LISTA=$(for c in arrendia-web-qa arrendia-web-prod; do docker inspect -f '{{.Config.Image}}' "$c" 2>/dev/null || true; done | sort -u | jq -R . | jq -sc .)
+          LISTA=$(for c in arrendia-web-qa arrendia-web-prod; do docker inspect -f '{{.Config.Image}}' "$c" 2>/dev/null || true; done | grep -v '^$' | sort -u | jq -R . | jq -sc .)
           echo "Imágenes desplegadas: $LISTA"
           echo "imagenes=$LISTA" >> "$GITHUB_OUTPUT"
 
