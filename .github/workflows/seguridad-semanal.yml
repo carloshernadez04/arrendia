@@ -1,0 +1,113 @@
+# Etapa 4: revisión semanal.
+# Aunque nadie toque el código, cada semana aparecen vulnerabilidades nuevas en librerías e imágenes.
+name: Seguridad semanal
+
+on:
+  schedule:
+    - cron: "0 13 * * 1"   # lunes 7:00 a. m. hora de El Salvador
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  DOTNET_NOLOGO: true
+  DOTNET_CLI_TELEMETRY_OPTOUT: true
+
+jobs:
+  dependencias:
+    name: Revisar dependencias y configuración
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        rama: [development, qa, main]
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ matrix.rama }}
+
+      - name: ¿La rama ya tiene el proyecto?
+        id: proyecto
+        run: |
+          if [ -f Arrendia.sln ]; then echo "existe=true" >> "$GITHUB_OUTPUT"
+          else echo "::notice::La rama ${{ matrix.rama }} todavía no tiene el proyecto; se omite."; fi
+
+      - uses: actions/setup-dotnet@v6
+        if: steps.proyecto.outputs.existe == 'true'
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Paquetes NuGet vulnerables
+        if: steps.proyecto.outputs.existe == 'true'
+        run: |
+          dotnet restore Arrendia.sln
+          dotnet list Arrendia.sln package --vulnerable --include-transitive 2>&1 | tee vulnerables.txt
+          if grep -qi "has the following vulnerable packages\|tiene los siguientes paquetes vulnerables" vulnerables.txt; then
+            echo "::error::La rama ${{ matrix.rama }} tiene paquetes con vulnerabilidades conocidas"
+            exit 1
+          fi
+
+      - name: Escaneo del repositorio (Trivy)
+        if: steps.proyecto.outputs.existe == 'true'
+        uses: aquasecurity/trivy-action@v0.36.0
+        with:
+          scan-type: fs
+          scan-ref: .
+          scanners: vuln,secret,misconfig
+          severity: CRITICAL,HIGH
+          ignore-unfixed: true
+          exit-code: "1"
+
+  imagenes-desplegadas:
+    name: Identificar las imágenes que están corriendo
+    runs-on: [self-hosted, arrendia]
+    timeout-minutes: 5
+    outputs:
+      imagenes: ${{ steps.datos.outputs.imagenes }}
+    steps:
+      - name: Leer la imagen de cada ambiente
+        id: datos
+        run: |
+          LISTA=$(for c in arrendia-web-qa arrendia-web-prod; do docker inspect -f '{{.Config.Image}}' "$c" 2>/dev/null || true; done | grep -v '^$' | sort -u | jq -R . | jq -sc .)
+          echo "Imágenes desplegadas: $LISTA"
+          echo "imagenes=$LISTA" >> "$GITHUB_OUTPUT"
+
+  escanear-imagenes:
+    name: Escanear imagen desplegada
+    needs: imagenes-desplegadas
+    if: needs.imagenes-desplegadas.outputs.imagenes != '[]'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: read
+      packages: read
+    strategy:
+      fail-fast: false
+      matrix:
+        imagen: ${{ fromJson(needs.imagenes-desplegadas.outputs.imagenes) }}
+    steps:
+      - name: Iniciar sesión en el registro
+        run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u "${{ github.actor }}" --password-stdin
+
+      - name: Escanear con la base de vulnerabilidades de hoy (Trivy)
+        uses: aquasecurity/trivy-action@v0.36.0
+        with:
+          image-ref: ${{ matrix.imagen }}
+          severity: CRITICAL,HIGH
+          ignore-unfixed: true
+          exit-code: "1"
+
+  restauracion:
+    name: Probar que el respaldo de producción se pueda restaurar
+    runs-on: [self-hosted, arrendia]
+    timeout-minutes: 30
+    concurrency:
+      group: base-de-datos
+      cancel-in-progress: false
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Restaurar en una base temporal y revisar su integridad
+        run: deploy/scripts/probar-restauracion.sh

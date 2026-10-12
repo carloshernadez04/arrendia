@@ -1,0 +1,8 @@
+# Objetos de la base de datos que necesita esta versión de la aplicación.
+# Antes de desplegar, el pipeline verifica que todos existan en la base del ambiente (QA o producción).
+# Si falta alguno, el despliegue se detiene.
+#
+# Un objeto por línea, con su esquema. Ejemplos:
+#   dbo.sp_RegistrarPago
+#   dbo.vw_EstadoCuenta
+#   dbo.Cargo

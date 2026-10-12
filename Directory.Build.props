@@ -1,0 +1,21 @@
+<Project>
+  <!-- Reglas comunes para todos los proyectos de la solución -->
+  <PropertyGroup>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <LangVersion>latest</LangVersion>
+
+    <!-- Una advertencia rompe la compilación: no se acumula basura -->
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <AnalysisLevel>latest-recommended</AnalysisLevel>
+    <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
+    <GenerateDocumentationFile>false</GenerateDocumentationFile>
+
+    <!-- Revisa vulnerabilidades de los paquetes NuGet (directos y transitivos) en cada restore -->
+    <NuGetAudit>true</NuGetAudit>
+    <NuGetAuditMode>all</NuGetAuditMode>
+    <NuGetAuditLevel>high</NuGetAuditLevel>
+
+    <Deterministic>true</Deterministic>
+  </PropertyGroup>
+</Project>

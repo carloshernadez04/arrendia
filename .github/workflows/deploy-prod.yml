@@ -1,0 +1,182 @@
+# Etapa 3: despliegue a producción.
+# Se ejecuta al fusionar el PR de qa hacia main. Despliega la MISMA imagen que pasó QA,
+# después de volver a revisar todo con la información del día y con tu aprobación manual.
+name: Desplegar producción
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: desplegar-prod
+  cancel-in-progress: false
+
+env:
+  REGISTRO: ghcr.io/${{ github.repository }}
+  DIAS_MAXIMOS_DESDE_QA: 14
+
+jobs:
+  revisar:
+    name: Revisión previa a producción
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: read
+      packages: read
+      deployments: read
+      security-events: read
+    outputs:
+      imagen: ${{ steps.datos.outputs.imagen }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Identificar la versión
+        id: datos
+        run: |
+          ARBOL=$(git rev-parse "HEAD^{tree}")
+          REG=$(echo "$REGISTRO" | tr '[:upper:]' '[:lower:]')
+          echo "arbol=$ARBOL" >> "$GITHUB_OUTPUT"
+          echo "imagen=$REG:arbol-$ARBOL" >> "$GITHUB_OUTPUT"
+
+      - name: Esta versión debe haber pasado por QA (y hace poco)
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          ARBOL: ${{ steps.datos.outputs.arbol }}
+        run: |
+          ENCONTRADO=""
+          for dep in $(gh api "repos/$GITHUB_REPOSITORY/deployments?environment=qa&per_page=30" --jq '.[] | "\(.id),\(.sha)"'); do
+            ID="${dep%%,*}"
+            SHA="${dep##*,}"
+            [ "$(git rev-parse "$SHA^{tree}" 2>/dev/null)" = "$ARBOL" ] || continue
+            ESTADO=$(gh api "repos/$GITHUB_REPOSITORY/deployments/$ID/statuses" --jq '.[0].state')
+            FECHA=$(gh api "repos/$GITHUB_REPOSITORY/deployments/$ID/statuses" --jq '.[0].created_at')
+            if [ "$ESTADO" = "success" ]; then
+              ENCONTRADO="$FECHA"
+              break
+            fi
+          done
+          if [ -z "$ENCONTRADO" ]; then
+            echo "::error::Esta versión nunca se desplegó con éxito en QA. Pásala primero por QA."
+            exit 1
+          fi
+          DIAS=$(( ( $(date +%s) - $(date -d "$ENCONTRADO" +%s) ) / 86400 ))
+          echo "Pasó QA el $ENCONTRADO (hace $DIAS días)."
+          if [ "$DIAS" -gt "$DIAS_MAXIMOS_DESDE_QA" ]; then
+            echo "::error::Pasaron $DIAS días desde QA (máximo $DIAS_MAXIMOS_DESDE_QA). Vuelve a ejecutar 'Desplegar QA' en la rama qa y repite."
+            exit 1
+          fi
+
+      - uses: actions/setup-dotnet@v6
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Volver a compilar y probar
+        run: |
+          dotnet restore Arrendia.sln
+          dotnet build Arrendia.sln -c Release --no-restore
+          dotnet test Arrendia.sln -c Release --no-build
+
+      - name: Revisar paquetes con la información de vulnerabilidades de hoy
+        run: |
+          dotnet list Arrendia.sln package --vulnerable --include-transitive 2>&1 | tee vulnerables.txt
+          if grep -qi "has the following vulnerable packages\|tiene los siguientes paquetes vulnerables" vulnerables.txt; then
+            echo "::error::Aparecieron paquetes vulnerables desde que esta versión pasó QA."
+            exit 1
+          fi
+
+      - name: Sin alertas de seguridad altas o críticas abiertas (CodeQL)
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          ALERTAS=$(gh api "repos/$GITHUB_REPOSITORY/code-scanning/alerts?state=open&per_page=100" \
+            --jq '[.[] | select(.rule.security_severity_level == "high" or .rule.security_severity_level == "critical")] | length')
+          echo "Alertas altas o críticas abiertas: $ALERTAS"
+          if [ "$ALERTAS" -ne 0 ]; then
+            echo "::error::Hay alertas de seguridad abiertas. Corrígelas antes de producción."
+            exit 1
+          fi
+
+      - name: Iniciar sesión en el registro
+        run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u "${{ github.actor }}" --password-stdin
+
+      - name: Volver a escanear la imagen que pasó QA (Trivy, base de hoy)
+        uses: aquasecurity/trivy-action@v0.36.0
+        with:
+          image-ref: ${{ steps.datos.outputs.imagen }}
+          severity: CRITICAL,HIGH
+          ignore-unfixed: true
+          exit-code: "1"
+
+  desplegar:
+    name: Desplegar en el servidor (producción)
+    needs: revisar
+    runs-on: [self-hosted, arrendia]
+    timeout-minutes: 30
+    environment:
+      name: production
+      url: ${{ vars.APP_URL }}
+    permissions:
+      contents: read
+      packages: read
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Respaldar la base de producción
+        run: deploy/scripts/respaldar-bd.sh ArrendiaProd
+
+      - name: Verificar que la base de producción tenga los objetos requeridos
+        run: deploy/scripts/verificar-bd.sh ArrendiaProd
+
+      - name: Iniciar sesión en el registro
+        run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u "${{ github.actor }}" --password-stdin
+
+      - name: Desplegar la imagen que pasó QA, con regreso automático si falla
+        env:
+          DOTENV: ${{ secrets.DOTENV }}
+        run: deploy/scripts/desplegar.sh prod "${{ needs.revisar.outputs.imagen }}" "${{ vars.APP_PORT }}"
+
+      - name: Avisar a Slack
+        if: always()
+        env:
+          SLACK: ${{ secrets.SLACK_WEBHOOK_URL }}
+          ESTADO_JOB: ${{ job.status }}
+        run: |
+          [ -z "$SLACK" ] && exit 0
+          if [ "$ESTADO_JOB" = "success" ]; then TEXTO="Produccion desplegada"; else TEXTO="Falló el despliegue a producción"; fi
+          curl -fsS -X POST -H 'Content-type: application/json' \
+            --data "{\"text\":\"$TEXTO - ${GITHUB_SHA::7} - $GITHUB_ACTOR\"}" "$SLACK" || true
+
+  humo:
+    name: Pruebas de humo desde internet (producción)
+    needs: desplegar
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    environment: production
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: La aplicación responde por Cloudflare con sus encabezados de seguridad
+        run: deploy/scripts/humo.sh "${{ vars.APP_URL }}"
+
+  version:
+    name: Registrar la versión publicada
+    needs: humo
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: write
+    steps:
+      - name: Crear etiqueta y release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          VERSION="v$(TZ=America/El_Salvador date +%Y.%m.%d)-${GITHUB_SHA::7}"
+          gh release create "$VERSION" -R "$GITHUB_REPOSITORY" --target "$GITHUB_SHA" \
+            --title "Producción $VERSION" --generate-notes
+          echo "Versión publicada: $VERSION" >> "$GITHUB_STEP_SUMMARY"

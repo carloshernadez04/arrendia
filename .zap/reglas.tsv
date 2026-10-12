@@ -1,0 +1,3 @@
+# Reglas de OWASP ZAP para el escaneo de QA (separadas por tabulador: id, acción, motivo).
+# Solo se ignoran alertas informativas con justificación; todo lo demás hace fallar el despliegue.
+10049	IGNORE	(Informativa: los CSS y JS públicos pueden guardarse en caché; las páginas usan no-store)

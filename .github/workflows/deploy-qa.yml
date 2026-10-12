@@ -1,0 +1,146 @@
+# Etapa 2: despliegue a QA.
+# Se ejecuta cuando se fusiona un PR de development hacia qa (el PR ya exigió el CI en verde).
+name: Desplegar QA
+
+on:
+  push:
+    branches: [qa]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: desplegar-qa
+  cancel-in-progress: false
+
+env:
+  REGISTRO: ghcr.io/${{ github.repository }}
+
+jobs:
+  imagen:
+    name: Construir, escanear y publicar imagen
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: read
+      packages: write
+    outputs:
+      imagen: ${{ steps.datos.outputs.imagen }}
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Identificar la versión
+        id: datos
+        run: |
+          ARBOL=$(git rev-parse "HEAD^{tree}")
+          REG=$(echo "$REGISTRO" | tr '[:upper:]' '[:lower:]')
+          echo "imagen=$REG:arbol-$ARBOL" >> "$GITHUB_OUTPUT"
+          echo "registro=$REG" >> "$GITHUB_OUTPUT"
+
+      - uses: docker/setup-buildx-action@v4
+
+      - name: Construir la imagen
+        uses: docker/build-push-action@v7
+        with:
+          context: .
+          file: deploy/Dockerfile
+          load: true
+          push: false
+          tags: ${{ steps.datos.outputs.imagen }}
+
+      - name: Escanear la imagen (Trivy)
+        uses: aquasecurity/trivy-action@v0.36.0
+        with:
+          image-ref: ${{ steps.datos.outputs.imagen }}
+          severity: CRITICAL,HIGH
+          ignore-unfixed: true
+          exit-code: "1"
+
+      - name: Publicar en GitHub Container Registry
+        env:
+          IMAGEN: ${{ steps.datos.outputs.imagen }}
+          REG: ${{ steps.datos.outputs.registro }}
+        run: |
+          echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u "${{ github.actor }}" --password-stdin
+          docker tag "$IMAGEN" "$REG:sha-$GITHUB_SHA"
+          docker push "$IMAGEN"
+          docker push "$REG:sha-$GITHUB_SHA"
+
+  desplegar:
+    name: Desplegar en el servidor (QA)
+    needs: imagen
+    runs-on: [self-hosted, arrendia]
+    timeout-minutes: 20
+    environment:
+      name: qa
+      url: ${{ vars.APP_URL }}
+    permissions:
+      contents: read
+      packages: read
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: QA no puede usar llaves de pago reales
+        env:
+          DOTENV: ${{ secrets.DOTENV }}
+        run: |
+          if printf '%s' "$DOTENV" | grep -qE '(pub|prv)_prod_'; then
+            echo "::error::El .env de QA contiene llaves de producción de la pasarela de pago."
+            exit 1
+          fi
+          echo "Sin llaves de producción en QA."
+
+      - name: Verificar que la base de QA tenga los objetos requeridos
+        run: deploy/scripts/verificar-bd.sh ArrendiaQA
+
+      - name: Iniciar sesión en el registro
+        run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u "${{ github.actor }}" --password-stdin
+
+      - name: Desplegar con verificación de salud
+        env:
+          DOTENV: ${{ secrets.DOTENV }}
+        run: deploy/scripts/desplegar.sh qa "${{ needs.imagen.outputs.imagen }}" "${{ vars.APP_PORT }}"
+
+      - name: Avisar a Slack
+        if: always()
+        env:
+          SLACK: ${{ secrets.SLACK_WEBHOOK_URL }}
+          ESTADO_JOB: ${{ job.status }}
+        run: |
+          [ -z "$SLACK" ] && exit 0
+          if [ "$ESTADO_JOB" = "success" ]; then TEXTO="QA desplegado"; else TEXTO="Falló el despliegue a QA"; fi
+          curl -fsS -X POST -H 'Content-type: application/json' \
+            --data "{\"text\":\"$TEXTO - ${GITHUB_SHA::7} - $GITHUB_ACTOR\"}" "$SLACK" || true
+
+  humo:
+    name: Pruebas de humo desde internet (QA)
+    needs: desplegar
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    environment: qa
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: La aplicación responde por Cloudflare con sus encabezados de seguridad
+        run: deploy/scripts/humo.sh "${{ vars.APP_URL }}"
+
+  escaneo-dast:
+    name: Escaneo de seguridad sobre QA (OWASP ZAP)
+    needs: humo
+    if: vars.ZAP_HABILITADO == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    environment: qa
+    permissions:
+      contents: read
+      issues: write
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: zaproxy/action-baseline@v0.15.0
+        with:
+          target: ${{ vars.APP_URL }}
+          rules_file_name: .zap/reglas.tsv
+          fail_action: true
+          allow_issue_writing: false
