@@ -10,6 +10,8 @@ public class SeguridadTests(WebApplicationFactory<Program> fabrica) : IClassFixt
     [InlineData("Referrer-Policy")]
     [InlineData("Permissions-Policy")]
     [InlineData("Content-Security-Policy")]
+    [InlineData("Cross-Origin-Embedder-Policy")]
+    [InlineData("Cache-Control")]
     public async Task LasRespuestasLlevanEncabezadosDeSeguridad(string encabezado)
     {
         using var cliente = fabrica.CreateClient();
