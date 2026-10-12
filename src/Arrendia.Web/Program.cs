@@ -48,7 +48,7 @@ app.Use(async (contexto, siguiente) =>
     {
         if (!encabezados.ContainsKey("Cache-Control"))
         {
-            encabezados.CacheControl = "no-store";
+            encabezados.CacheControl = "no-cache, no-store, must-revalidate";
             encabezados.Pragma = "no-cache";
         }
 
