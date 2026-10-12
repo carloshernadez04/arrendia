@@ -7,7 +7,7 @@ falla=0
 revisar() {
   local nombre="$1" ruta="$2" esperado="$3"
   local codigo tiempo
-  read -r codigo tiempo < <(curl -sS -o /tmp/humo.body -w "%{http_code} %{time_total}" --max-time 20 "$URL$ruta" || echo "000 0")
+  read -r codigo tiempo < <(curl -sS -o /tmp/humo.body -w "%{http_code} %{time_total}\n" --max-time 20 "$URL$ruta" || echo "000 0")
   if [ "$codigo" = "$esperado" ]; then echo "OK   $nombre ($ruta) -> $codigo en ${tiempo}s"
   else echo "::error::$nombre ($ruta) devolvió $codigo, se esperaba $esperado"; falla=1; fi
 }
