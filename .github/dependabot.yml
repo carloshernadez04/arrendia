@@ -1,0 +1,31 @@
+# Dependabot revisa cada semana si hay versiones nuevas o parches de seguridad
+# y abre un PR hacia development para actualizarlas.
+version: 2
+updates:
+  - package-ecosystem: nuget
+    directory: /
+    target-branch: development
+    schedule:
+      interval: weekly
+      day: monday
+    open-pull-requests-limit: 5
+    groups:
+      nuget:
+        patterns: ["*"]
+
+  - package-ecosystem: github-actions
+    directory: /
+    target-branch: development
+    schedule:
+      interval: weekly
+      day: monday
+    groups:
+      acciones:
+        patterns: ["*"]
+
+  - package-ecosystem: docker
+    directory: /deploy
+    target-branch: development
+    schedule:
+      interval: weekly
+      day: monday

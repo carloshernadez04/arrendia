@@ -426,3 +426,8 @@ FodyWeavers.xsd
 
 # Official VS Code C# Dev Kit Extension exclusion
 #*.lscache
+
+# --- Arrendia: entorno local ---
+.env
+db-local/*
+!db-local/LEEME.txt
