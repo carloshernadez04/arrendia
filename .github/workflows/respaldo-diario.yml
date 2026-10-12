@@ -1,9 +1,9 @@
-# Respaldo nocturno de las bases en el servidor. Se conservan los últimos 14 de cada una.
+# El respaldo diario lo hace cron en el servidor (deploy/scripts/respaldo-del-dia.sh, cada hora,
+# solo si todavía no hay respaldo de hoy), porque el servidor no siempre está encendido.
+# Este workflow sirve para respaldar a mano y para instalar o actualizar esa tarea en el servidor.
 name: Respaldo diario
 
 on:
-  schedule:
-    - cron: "0 8 * * *"   # 2:00 a. m. hora de El Salvador
   workflow_dispatch:
 
 permissions:
@@ -15,11 +15,14 @@ concurrency:
 
 jobs:
   respaldar:
-    name: Respaldar ArrendiaProd y ArrendiaQA
+    name: Respaldar ahora e instalar la tarea programada
     runs-on: [self-hosted, arrendia]
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@v7
+
+      - name: Instalar o actualizar la tarea en el servidor
+        run: deploy/scripts/instalar-respaldo-programado.sh
 
       - name: Respaldar producción
         run: deploy/scripts/respaldar-bd.sh ArrendiaProd
