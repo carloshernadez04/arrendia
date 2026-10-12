@@ -37,9 +37,23 @@ app.Use(async (contexto, siguiente) =>
     encabezados["Referrer-Policy"] = "strict-origin-when-cross-origin";
     encabezados["Permissions-Policy"] = "camera=(), microphone=(), geolocation=(), payment=()";
     encabezados["Cross-Origin-Opener-Policy"] = "same-origin";
+    encabezados["Cross-Origin-Embedder-Policy"] = "credentialless";
+    encabezados["Cross-Origin-Resource-Policy"] = "same-origin";
     encabezados["Content-Security-Policy"] =
         "default-src 'self'; img-src 'self' data: https://res.cloudinary.com; " +
         "object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'";
+    // Las páginas tienen datos personales y financieros: el navegador no debe guardarlas.
+    // Los archivos estáticos ya traen su propia política de caché y se respetan.
+    contexto.Response.OnStarting(() =>
+    {
+        if (!encabezados.ContainsKey("Cache-Control"))
+        {
+            encabezados.CacheControl = "no-store";
+            encabezados.Pragma = "no-cache";
+        }
+
+        return Task.CompletedTask;
+    });
     await siguiente();
 });
 app.UseRouting();
