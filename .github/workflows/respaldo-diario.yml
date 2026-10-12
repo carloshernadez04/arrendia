@@ -1,0 +1,41 @@
+# El respaldo diario lo hace cron en el servidor (deploy/scripts/respaldo-del-dia.sh, cada hora,
+# solo si todavía no hay respaldo de hoy), porque el servidor no siempre está encendido.
+# Este workflow sirve para respaldar a mano y para instalar o actualizar esa tarea en el servidor.
+name: Respaldo diario
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: base-de-datos
+  cancel-in-progress: false
+
+jobs:
+  respaldar:
+    name: Respaldar ahora e instalar la tarea programada
+    runs-on: [self-hosted, arrendia]
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Instalar o actualizar la tarea en el servidor
+        run: deploy/scripts/instalar-respaldo-programado.sh
+
+      - name: Respaldar producción
+        run: deploy/scripts/respaldar-bd.sh ArrendiaProd
+
+      - name: Respaldar QA
+        run: deploy/scripts/respaldar-bd.sh ArrendiaQA
+
+      - name: Espacio en disco del servidor
+        run: |
+          USO=$(df --output=pcent "$HOME" | tail -1 | tr -dc '0-9')
+          du -sh "$HOME/apps/arrendia/respaldos"
+          echo "Disco al $USO %"
+          if [ "$USO" -ge 90 ]; then
+            echo "::error::El disco del servidor está al $USO %."
+            exit 1
+          fi

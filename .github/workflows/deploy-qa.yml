@@ -113,9 +113,21 @@ jobs:
           curl -fsS -X POST -H 'Content-type: application/json' \
             --data "{\"text\":\"$TEXTO - ${GITHUB_SHA::7} - $GITHUB_ACTOR\"}" "$SLACK" || true
 
+  humo:
+    name: Pruebas de humo desde internet (QA)
+    needs: desplegar
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    environment: qa
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: La aplicación responde por Cloudflare con sus encabezados de seguridad
+        run: deploy/scripts/humo.sh "${{ vars.APP_URL }}"
+
   escaneo-dast:
     name: Escaneo de seguridad sobre QA (OWASP ZAP)
-    needs: desplegar
+    needs: humo
     if: vars.ZAP_HABILITADO == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 20
