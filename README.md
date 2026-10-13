@@ -49,7 +49,7 @@ La estructura (tablas, procedimientos y vistas) no vive en este repositorio. Par
 2. En SSMS conéctate a `localhost,14333` y restaura el respaldo desde `/var/opt/mssql/backup/`.
 3. Si hace falta, carga los datos iniciales:
    ```bash
-   docker exec arrendia-db /opt/mssql-tools18/bin/sqlcmd -C -S localhost -U sa -P "TU_CLAVE" -d Arrendia -i /seed/seed.sql
+   docker exec arrendia-db /opt/mssql-tools18/bin/sqlcmd -C -I -S localhost -U sa -P "TU_CLAVE" -d Arrendia -i /seed/seed.sql
    ```
 
 ### Otros comandos

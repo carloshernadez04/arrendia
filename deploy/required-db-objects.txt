@@ -3,6 +3,6 @@
 # Si falta alguno, el despliegue se detiene.
 #
 # Un objeto por línea, con su esquema. Ejemplos:
-#   dbo.sp_RegistrarPago
-#   dbo.vw_EstadoCuenta
-#   dbo.Cargo
+#   dbo.SP_REGISTRAR_PAGO
+#   dbo.VW_ESTADO_CUENTA
+#   dbo.CARGO
