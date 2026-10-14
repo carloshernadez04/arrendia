@@ -151,6 +151,9 @@ app.UseAuthorization();
 
 app.MapStaticAssets().AllowAnonymous();
 app.MapHealthChecks("/health").AllowAnonymous();
+app.MapGet("/robots.txt", () => Results.Text("User-agent: *
+Disallow: /
+", "text/plain")).AllowAnonymous();
 app.MapControllers().WithStaticAssets();
 app.MapFallback(() => Results.NotFound()).AllowAnonymous();
 

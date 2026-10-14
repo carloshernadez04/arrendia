@@ -24,6 +24,7 @@ public class SeguridadTests(WebApplicationFactory<Program> fabrica) : IClassFixt
     [Theory]
     [InlineData("/cuenta/entrar")]
     [InlineData("/cuenta/recuperar")]
+    [InlineData("/robots.txt")]
     public async Task LasPaginasConFormularioNoSeGuardanEnCache(string ruta)
     {
         using var cliente = fabrica.CreateClient();
