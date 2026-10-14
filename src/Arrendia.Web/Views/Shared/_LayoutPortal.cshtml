@@ -1,0 +1,43 @@
+@{
+    var nombre = User.Identity?.Name ?? "";
+}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <partial name="_Cabecera" />
+    <title>@(ViewData["Title"] is string t ? $"{t} · Arrendia" : "Arrendia")</title>
+</head>
+<body>
+    <div class="portal">
+        <header class="portal-top">
+            @Iconos.Logo<b class="marca">Arrendia</b>
+            <nav class="portal-nav" aria-label="Secciones">
+                <a href="/portal" aria-current="page">Inicio</a>
+                <span class="off">Pagar</span>
+                <span class="off">Documentos</span>
+                <span class="off">Reportes</span>
+            </nav>
+            <span class="grow"></span>
+            <partial name="_BotonTema" />
+            <div class="rel">
+                <button type="button" class="av" data-pop aria-haspopup="menu" aria-label="Cuenta">@Navegacion.Iniciales(nombre)</button>
+                <div class="pop" role="menu">
+                    <div class="pop-h"><b>@nombre</b><span class="muted">@User.FindFirstValue(ClaimTypes.Email)</span></div>
+                    <form method="post" asp-controller="Cuenta" asp-action="Salir">
+                        <button type="submit" class="it" role="menuitem">@Iconos.Svg("logout", "s") Cerrar sesión</button>
+                    </form>
+                </div>
+            </div>
+        </header>
+        <main class="portal-main" id="vista">
+            @RenderBody()
+        </main>
+        <nav class="portal-barra" aria-label="Secciones">
+            <a href="/portal" aria-current="page">@Iconos.Svg("home")Inicio</a>
+            <span class="off">@Iconos.Svg("card")Pagar</span>
+            <span class="off">@Iconos.Svg("file")Documentos</span>
+            <span class="off">@Iconos.Svg("wrench")Reportes</span>
+        </nav>
+    </div>
+</body>
+</html>

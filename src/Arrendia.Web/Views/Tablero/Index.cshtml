@@ -1,0 +1,18 @@
+@{
+    ViewData["Title"] = "Tablero";
+    var nombre = (User.Identity?.Name ?? "").Split(' ')[0];
+    var hoy = TimeZoneInfo.ConvertTimeBySystemTimeZoneId(DateTime.UtcNow, "America/El_Salvador");
+}
+<div class="ph">
+    <div>
+        <h2>Hola, @nombre</h2>
+        <p class="muted">@hoy.ToString("dddd d 'de' MMMM 'de' yyyy")</p>
+    </div>
+</div>
+<div class="card">
+    <div class="vacio">
+        @Iconos.Svg("chart", "xl")
+        <b>Aquí va el tablero</b>
+        <span>Los indicadores de cobros, ocupación y reportes aparecerán cuando se construyan esos módulos.</span>
+    </div>
+</div>

@@ -1,3 +1,6 @@
 # Reglas de OWASP ZAP para el escaneo de QA (separadas por tabulador: id, acción, motivo).
 # Solo se ignoran alertas informativas con justificación; todo lo demás hace fallar el despliegue.
 10049	IGNORE	(Informativa: los CSS y JS públicos pueden guardarse en caché; las páginas usan no-store)
+10031	IGNORE	(Informativa: el parámetro volver se codifica con Razor y la app solo acepta rutas locales con Url.IsLocalUrl)
+10112	IGNORE	(Informativa: solo identifica la cookie de sesión arrendia.sesion, que es HttpOnly, Secure y SameSite=Lax)
+*	OUTOFSCOPE	.*/cdn-cgi/.*

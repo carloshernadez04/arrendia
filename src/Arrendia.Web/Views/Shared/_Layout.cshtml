@@ -1,49 +1,57 @@
+@{
+    var nombre = User.Identity?.Name ?? "";
+    var rol = User.FindFirstValue(ClaimTypes.Role) ?? "";
+    var ruta = Context.Request.Path.Value ?? "";
+}
 <!DOCTYPE html>
-<html lang="en">
+<html lang="es">
 <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>@ViewData["Title"] - Arrendia.Web</title>
-    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
-    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
-    <link rel="stylesheet" href="~/Arrendia.Web.styles.css" asp-append-version="true" />
+    <partial name="_Cabecera" />
+    <title>@(ViewData["Title"] is string t ? $"{t} · Arrendia" : "Arrendia")</title>
 </head>
 <body>
-    <header>
-        <nav class="navbar navbar-expand-sm navbar-toggleable-sm navbar-light bg-white border-bottom box-shadow mb-3">
-            <div class="container-fluid">
-                <a class="navbar-brand" asp-area="" asp-controller="Home" asp-action="Index">Arrendia.Web</a>
-                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target=".navbar-collapse" aria-controls="navbarSupportedContent"
-                        aria-expanded="false" aria-label="Toggle navigation">
-                    <span class="navbar-toggler-icon"></span>
-                </button>
-                <div class="navbar-collapse collapse d-sm-inline-flex justify-content-between">
-                    <ul class="navbar-nav flex-grow-1">
-                        <li class="nav-item">
-                            <a class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="Index">Home</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="Privacy">Privacy</a>
-                        </li>
-                    </ul>
+    <div class="shell" data-shell>
+        <aside class="side" aria-label="Menú principal">
+            <div class="brand">@Iconos.Logo<b>Arrendia</b></div>
+            <nav class="nav">
+                @foreach (var grupo in Navegacion.Para(User))
+                {
+                    <div class="ngrp">@grupo.Titulo</div>
+                    @foreach (var e in grupo.Elementos)
+                    {
+                        if (e.Ruta is null)
+                        {
+                            <span class="nl off" title="Se construye en un próximo módulo">@Iconos.Svg(e.Icono)<span class="t">@e.Texto</span><span class="pronto">Pronto</span></span>
+                        }
+                        else
+                        {
+                            <a class="nl" href="@e.Ruta" aria-current="@(ruta.StartsWith(e.Ruta, StringComparison.OrdinalIgnoreCase) ? "page" : null)">@Iconos.Svg(e.Icono)<span class="t">@e.Texto</span></a>
+                        }
+                    }
+                }
+            </nav>
+        </aside>
+        <div class="velo" data-cerrar-menu></div>
+        <div class="main">
+            <header class="top">
+                <button type="button" class="btn ghost icon burger" data-abrir-menu aria-label="Abrir menú">@Iconos.Svg("menu")</button>
+                <h1 class="titulo">@ViewData["Title"]</h1>
+                <span class="grow"></span>
+                <partial name="_BotonTema" />
+                <div class="rel">
+                    <button type="button" class="av" data-pop aria-haspopup="menu" aria-label="Cuenta">@Navegacion.Iniciales(nombre)</button>
+                    <div class="pop" role="menu">
+                        <div class="pop-h"><b>@nombre</b><span class="muted">@rol · @User.FindFirstValue(ClaimTypes.Email)</span></div>
+                        <form method="post" asp-controller="Cuenta" asp-action="Salir">
+                            <button type="submit" class="it" role="menuitem">@Iconos.Svg("logout", "s") Cerrar sesión</button>
+                        </form>
+                    </div>
                 </div>
-            </div>
-        </nav>
-    </header>
-    <div class="container">
-        <main role="main" class="pb-3">
-            @RenderBody()
-        </main>
-    </div>
-
-    <footer class="border-top footer text-muted">
-        <div class="container">
-            &copy; 2026 - Arrendia.Web - <a asp-area="" asp-controller="Home" asp-action="Privacy">Privacy</a>
+            </header>
+            <main id="vista">
+                @RenderBody()
+            </main>
         </div>
-    </footer>
-    <script src="~/lib/jquery/dist/jquery.min.js"></script>
-    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="~/js/site.js" asp-append-version="true"></script>
-    @await RenderSectionAsync("Scripts", required: false)
+    </div>
 </body>
 </html>

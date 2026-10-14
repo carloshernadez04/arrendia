@@ -1,0 +1,15 @@
+@model NuevaContrasenaModelo
+<div class="fld">
+    <label asp-for="Contrasena"></label>
+    <div class="con-boton">
+        <input asp-for="Contrasena" class="inp" autocomplete="new-password" autofocus required data-medidor />
+        <button type="button" class="btn ghost icon sm" data-ver-contrasena aria-label="Mostrar contraseña">@Iconos.Svg("eye", "s")</button>
+    </div>
+    <div class="medidor" data-medidor-barra hidden><i></i></div>
+    <span class="hint">Al menos @ReglasContrasena.LongitudMinima caracteres, con letras y números.</span>
+    <span asp-validation-for="Contrasena" class="error-campo"></span>
+</div>
+<div class="fld">
+    <label asp-for="Confirmacion"></label>
+    <input asp-for="Confirmacion" class="inp" autocomplete="new-password" required />
+</div>

@@ -1,0 +1,27 @@
+@model EntrarModelo
+@{
+    ViewData["Title"] = "Entrar";
+    Layout = "_LayoutAcceso";
+}
+<div class="col encabezado">
+    <h1>Entrar a Arrendia</h1>
+    <p class="muted">Administra tus propiedades, cobros y reportes.</p>
+</div>
+<form method="post" asp-action="Entrar" class="col" novalidate data-formulario>
+    <div asp-validation-summary="ModelOnly" class="aviso error" role="alert"></div>
+    <input type="hidden" asp-for="Volver" />
+    <div class="fld">
+        <label asp-for="Email"></label>
+        <input asp-for="Email" class="inp" type="email" autocomplete="username" autofocus required />
+    </div>
+    <div class="fld">
+        <label asp-for="Contrasena"></label>
+        <div class="con-boton">
+            <input asp-for="Contrasena" class="inp" autocomplete="current-password" required />
+            <button type="button" class="btn ghost icon sm" data-ver-contrasena aria-label="Mostrar contraseña">@Iconos.Svg("eye", "s")</button>
+        </div>
+    </div>
+    <button type="submit" class="btn pri lg blk">Entrar</button>
+    <a class="enlace" asp-action="Recuperar">¿Olvidaste tu contraseña?</a>
+</form>
+<p class="hint">No hay registro abierto: tu cuenta se crea con la invitación que te envía la administración.</p>
