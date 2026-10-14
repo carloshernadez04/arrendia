@@ -11,7 +11,9 @@ revisar() {
   if [ "$codigo" = "$esperado" ]; then echo "OK   $nombre ($ruta) -> $codigo en ${tiempo}s"
   else echo "::error::$nombre ($ruta) devolvió $codigo, se esperaba $esperado"; falla=1; fi
 }
-revisar "Página inicial" "/" 200
+revisar "Página de entrada" "/cuenta/entrar" 200
+revisar "La raíz manda a entrar" "/" 302
+revisar "El tablero pide sesión" "/tablero" 302
 revisar "Salud" "/health" 200
 grep -q "Healthy" /tmp/humo.body || { echo "::error::/health no respondió Healthy"; falla=1; }
 revisar "Ruta inexistente" "/no-existe-$RANDOM" 404
