@@ -131,7 +131,8 @@ app.Use(async (contexto, siguiente) =>
         "object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'";
     contexto.Response.OnStarting(() =>
     {
-        if (!encabezados.ContainsKey("Cache-Control"))
+        var cache = encabezados.CacheControl.ToString();
+        if (cache.Length == 0 || cache.Contains("no-store", StringComparison.OrdinalIgnoreCase))
         {
             encabezados.CacheControl = "no-cache, no-store, must-revalidate";
             encabezados.Pragma = "no-cache";

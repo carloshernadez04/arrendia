@@ -21,6 +21,19 @@ public class SeguridadTests(WebApplicationFactory<Program> fabrica) : IClassFixt
         Assert.True(respuesta.Headers.Contains(encabezado), $"Falta el encabezado {encabezado}");
     }
 
+    [Theory]
+    [InlineData("/cuenta/entrar")]
+    [InlineData("/cuenta/recuperar")]
+    public async Task LasPaginasConFormularioNoSeGuardanEnCache(string ruta)
+    {
+        using var cliente = fabrica.CreateClient();
+
+        var respuesta = await cliente.GetAsync(new Uri(ruta, UriKind.Relative));
+
+        var cache = respuesta.Headers.CacheControl;
+        Assert.True(cache is { NoStore: true, NoCache: true, MustRevalidate: true }, cache?.ToString());
+    }
+
     [Fact]
     public async Task NoRevelaElServidorWeb()
     {
