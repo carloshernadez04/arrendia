@@ -1,0 +1,18 @@
+@model MensajeCuentaModelo
+@{
+    ViewData["Title"] = Model.Titulo;
+    Layout = "_LayoutAcceso";
+}
+<div class="mensaje">
+    <span class="sello @(Model.Icono is "alert" or "lock" ? "alerta" : "")">@Iconos.Svg(Model.Icono, "l")</span>
+    <h1>@Model.Titulo</h1>
+    <p class="muted">@Model.Texto</p>
+    @if (User.Identity?.IsAuthenticated == true)
+    {
+        <a class="btn pri blk" href="/">Volver al inicio</a>
+    }
+    else
+    {
+        <a class="btn pri blk" asp-action="Entrar">Ir a entrar</a>
+    }
+</div>

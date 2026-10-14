@@ -1,0 +1,18 @@
+@model RecuperarModelo
+@{
+    ViewData["Title"] = "Recuperar contraseña";
+    Layout = "_LayoutAcceso";
+}
+<a class="btn ghost sm volver" asp-action="Entrar">@Iconos.Svg("chevL", "s")Volver</a>
+<div class="col encabezado">
+    <h1>Recuperar contraseña</h1>
+    <p class="muted">Escribe tu correo y te enviamos un enlace para crear una contraseña nueva.</p>
+</div>
+<form method="post" asp-action="Recuperar" class="col" novalidate data-formulario>
+    <div class="fld">
+        <label asp-for="Email"></label>
+        <input asp-for="Email" class="inp" type="email" autocomplete="email" autofocus required />
+        <span asp-validation-for="Email" class="error-campo"></span>
+    </div>
+    <button type="submit" class="btn pri lg blk">Enviar enlace</button>
+</form>

@@ -1,14 +1,89 @@
+using System.Globalization;
+using System.Threading.RateLimiting;
+using Arrendia.Web.Controllers;
+using Arrendia.Web.Data;
+using Arrendia.Web.Infraestructura;
+using Arrendia.Web.Services;
+using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.HttpOverrides;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Localization;
+using Microsoft.AspNetCore.Mvc;
 
 var builder = WebApplication.CreateBuilder(args);
+var desarrollo = builder.Environment.IsDevelopment();
 
-// No revelar el servidor web en las respuestas
 builder.WebHost.ConfigureKestrel(opciones => opciones.AddServerHeader = false);
 
-builder.Services.AddControllersWithViews();
-builder.Services.AddHealthChecks();
+BaseDatos.Configurar();
+builder.Services.AddHttpContextAccessor();
+builder.Services.AddSingleton(TimeProvider.System);
+builder.Services.AddScoped<IBaseDatos, BaseDatos>();
+builder.Services.AddScoped<IRepositorioCuentas, RepositorioCuentas>();
+builder.Services.AddScoped<IPasswordHasher<UsuarioAcceso>, PasswordHasher<UsuarioAcceso>>();
+builder.Services.AddScoped<ServicioAcceso>();
+builder.Services.AddScoped<ValidacionSesion>();
 
-// La app solo escucha en 127.0.0.1 detrás de Cloudflare Tunnel: se confía en el esquema original (https)
+builder.Services.Configure<OpcionesSmtp>(builder.Configuration.GetSection(OpcionesSmtp.Seccion));
+if (builder.Configuration.GetSection(OpcionesSmtp.Seccion).Get<OpcionesSmtp>()?.EstaConfigurado == true)
+{
+    builder.Services.AddScoped<ICorreo, CorreoSmtp>();
+}
+else
+{
+    builder.Services.AddScoped<ICorreo, CorreoEnRegistro>();
+}
+
+var proteccion = builder.Services.AddDataProtection().SetApplicationName("Arrendia");
+if (builder.Configuration["DataProtection:Ruta"] is { Length: > 0 } rutaClaves)
+{
+    proteccion.PersistKeysToFileSystem(new DirectoryInfo(rutaClaves));
+}
+
+builder.Services
+    .AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
+    .AddCookie(opciones =>
+    {
+        opciones.Cookie.Name = "arrendia.sesion";
+        opciones.Cookie.HttpOnly = true;
+        opciones.Cookie.SameSite = SameSiteMode.Lax;
+        opciones.Cookie.SecurePolicy = desarrollo ? CookieSecurePolicy.SameAsRequest : CookieSecurePolicy.Always;
+        opciones.ExpireTimeSpan = TimeSpan.FromHours(8);
+        opciones.SlidingExpiration = true;
+        opciones.LoginPath = "/cuenta/entrar";
+        opciones.LogoutPath = "/cuenta/salir";
+        opciones.AccessDeniedPath = "/cuenta/acceso-denegado";
+        opciones.ReturnUrlParameter = "volver";
+        opciones.EventsType = typeof(ValidacionSesion);
+    });
+
+builder.Services.AddAuthorizationBuilder()
+    .SetFallbackPolicy(new AuthorizationPolicyBuilder().RequireAuthenticatedUser().Build());
+
+builder.Services.AddAntiforgery(opciones =>
+{
+    opciones.Cookie.Name = "arrendia.af";
+    opciones.Cookie.SecurePolicy = desarrollo ? CookieSecurePolicy.SameAsRequest : CookieSecurePolicy.Always;
+});
+
+builder.Services.AddRateLimiter(opciones =>
+{
+    opciones.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+    opciones.AddPolicy(CuentaController.PoliticaLimite, contexto => RateLimitPartition.GetFixedWindowLimiter(
+        contexto.Connection.RemoteIpAddress?.ToString() ?? "desconocida",
+        _ => new FixedWindowRateLimiterOptions { PermitLimit = 10, Window = TimeSpan.FromMinutes(1), QueueLimit = 0 }));
+});
+
+builder.Services.AddControllersWithViews(opciones => opciones.Filters.Add(new AutoValidateAntiforgeryTokenAttribute()));
+
+var salud = builder.Services.AddHealthChecks();
+if (!string.IsNullOrEmpty(builder.Configuration.GetConnectionString(BaseDatos.NombreCadena)))
+{
+    salud.AddCheck<SaludBaseDatos>("base-de-datos");
+}
+
 builder.Services.Configure<ForwardedHeadersOptions>(opciones =>
 {
     opciones.ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
@@ -18,17 +93,29 @@ builder.Services.Configure<ForwardedHeadersOptions>(opciones =>
 
 var app = builder.Build();
 
+if (args.Length > 0 && args[0] == ComandoActivarAdministrador.Nombre)
+{
+    return await ComandoActivarAdministrador.EjecutarAsync(app.Services, args.ElementAtOrDefault(1));
+}
+
+var cultura = new CultureInfo("es-SV");
+app.UseRequestLocalization(new RequestLocalizationOptions
+{
+    DefaultRequestCulture = new RequestCulture(cultura),
+    SupportedCultures = [cultura],
+    SupportedUICultures = [cultura],
+});
+
 app.UseForwardedHeaders();
 
-if (!app.Environment.IsDevelopment())
+if (!desarrollo)
 {
-    app.UseExceptionHandler("/Home/Error");
+    app.UseExceptionHandler("/error");
     app.UseHsts();
 }
 
 app.UseHttpsRedirection();
 
-// Encabezados de seguridad en todas las respuestas
 app.Use(async (contexto, siguiente) =>
 {
     var encabezados = contexto.Response.Headers;
@@ -42,8 +129,6 @@ app.Use(async (contexto, siguiente) =>
     encabezados["Content-Security-Policy"] =
         "default-src 'self'; img-src 'self' data: https://res.cloudinary.com; " +
         "object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'";
-    // Las páginas tienen datos personales y financieros: el navegador no debe guardarlas.
-    // Los archivos estáticos ya traen su propia política de caché y se respetan.
     contexto.Response.OnStarting(() =>
     {
         if (!encabezados.ContainsKey("Cache-Control"))
@@ -56,19 +141,19 @@ app.Use(async (contexto, siguiente) =>
     });
     await siguiente();
 });
-app.UseRouting();
 
+app.UseStatusCodePagesWithReExecute("/error");
+app.UseRouting();
+app.UseRateLimiter();
+app.UseAuthentication();
 app.UseAuthorization();
 
-app.MapStaticAssets();
-app.MapHealthChecks("/health");
+app.MapStaticAssets().AllowAnonymous();
+app.MapHealthChecks("/health").AllowAnonymous();
+app.MapControllers().WithStaticAssets();
+app.MapFallback(() => Results.NotFound()).AllowAnonymous();
 
-app.MapControllerRoute(
-    name: "default",
-    pattern: "{controller=Home}/{action=Index}/{id?}")
-    .WithStaticAssets();
+await app.RunAsync();
+return 0;
 
-app.Run();
-
-// Permite que las pruebas levanten la aplicación con WebApplicationFactory
 public partial class Program;

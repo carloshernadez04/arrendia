@@ -1,0 +1,16 @@
+@{
+    ViewData["Title"] = "Inicio";
+    Layout = "_LayoutPortal";
+    var nombre = (User.Identity?.Name ?? "").Split(' ')[0];
+}
+<div class="col encabezado">
+    <h2>Hola, @nombre</h2>
+    <p class="muted">Este es tu portal de inquilino.</p>
+</div>
+<div class="card">
+    <div class="vacio">
+        @Iconos.Svg("home", "xl")
+        <b>Tu estado de cuenta aparecerá aquí</b>
+        <span>Podrás ver tus cargos, pagar con tarjeta, descargar comprobantes y reportar problemas.</span>
+    </div>
+</div>
