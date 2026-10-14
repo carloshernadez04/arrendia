@@ -1,0 +1,13 @@
+@model NuevaContrasenaModelo
+@{
+    ViewData["Title"] = "Contraseña nueva";
+    Layout = "_LayoutAcceso";
+}
+<div class="col encabezado">
+    <h1>Crea una contraseña nueva</h1>
+    <p class="muted">@Model.Nombre, al guardarla se cerrarán las sesiones abiertas en otros dispositivos.</p>
+</div>
+<form method="post" asp-action="Restablecer" asp-route-token="@Model.Token" class="col" novalidate data-formulario>
+    <partial name="_NuevaContrasena" model="Model" />
+    <button type="submit" class="btn pri lg blk">Guardar contraseña</button>
+</form>

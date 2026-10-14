@@ -49,8 +49,23 @@ La estructura (tablas, procedimientos y vistas) no vive en este repositorio. Par
 2. En SSMS conéctate a `localhost,14333` y restaura el respaldo desde `/var/opt/mssql/backup/`.
 3. Si hace falta, carga los datos iniciales:
    ```bash
-   docker exec arrendia-db /opt/mssql-tools18/bin/sqlcmd -C -S localhost -U sa -P "TU_CLAVE" -d Arrendia -i /seed/seed.sql
+   docker exec arrendia-db /opt/mssql-tools18/bin/sqlcmd -C -I -S localhost -U sa -P "TU_CLAVE" -d Arrendia -i /seed/seed.sql
    ```
+
+### Primer administrador
+
+El seed crea al administrador sin contraseña. Para activarlo, genera su enlace (vence en 7 días y se usa una sola vez):
+
+```bash
+dotnet run --project src/Arrendia.Web -- activar-admin admin@arrendia.site      # en tu computadora
+docker exec arrendia-web-qa dotnet Arrendia.Web.dll activar-admin               # en el servidor
+```
+
+Abre el enlace (antepón el dominio si sale solo la ruta), elige la contraseña y entras directo.
+
+### Correos en desarrollo
+
+Sin servidor SMTP configurado, en `Development` los correos (por ejemplo, el de recuperar contraseña) se escriben en la consola de la aplicación con su enlace. Para enviar correos reales, configura `Smtp:Host`, `Smtp:Puerto`, `Smtp:Usuario`, `Smtp:Contrasena` y `Smtp:Remitente` con `dotnet user-secrets` (nunca en `appsettings.json`).
 
 ### Otros comandos
 

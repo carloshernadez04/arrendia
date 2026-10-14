@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <partial name="_Cabecera" />
+    <title>@(ViewData["Title"] is string t ? $"{t} · Arrendia" : "Arrendia")</title>
+</head>
+<body>
+    <div class="acceso">
+        <aside class="acceso-arte" aria-hidden="true">
+            <div class="row">@Iconos.Logo<b class="marca">Arrendia</b></div>
+            <div class="col">
+                <h2>Cada unidad, al día.</h2>
+                <div class="plano" data-plano></div>
+                <div class="leyenda">
+                    <span><i class="o"></i>Ocupada</span>
+                    <span><i class="p"></i>Pago recibido</span>
+                    <span><i class="m"></i>Mantenimiento</span>
+                    <span><i class="d"></i>Disponible</span>
+                </div>
+            </div>
+            <span class="muted">Plazas comerciales y edificios en El Salvador</span>
+        </aside>
+        <section class="acceso-f">
+            <div class="acceso-tema"><partial name="_BotonTema" /></div>
+            <div class="acceso-caja">
+                <div class="row marca-movil">@Iconos.Logo<b class="marca">Arrendia</b></div>
+                @RenderBody()
+            </div>
+        </section>
+    </div>
+</body>
+</html>

@@ -7,13 +7,24 @@ public class SaludTests(WebApplicationFactory<Program> fabrica) : IClassFixture<
 {
     [Theory]
     [InlineData("/health")]
-    [InlineData("/")]
-    public async Task LaAplicacionResponde(string ruta)
+    [InlineData("/cuenta/entrar")]
+    [InlineData("/cuenta/recuperar")]
+    public async Task LasPaginasPublicasResponden(string ruta)
     {
         using var cliente = fabrica.CreateClient();
 
         var respuesta = await cliente.GetAsync(new Uri(ruta, UriKind.Relative));
 
         Assert.Equal(HttpStatusCode.OK, respuesta.StatusCode);
+    }
+
+    [Fact]
+    public async Task UnaRutaInexistenteDevuelve404()
+    {
+        using var cliente = fabrica.CreateClient();
+
+        var respuesta = await cliente.GetAsync(new Uri("/no-existe", UriKind.Relative));
+
+        Assert.Equal(HttpStatusCode.NotFound, respuesta.StatusCode);
     }
 }

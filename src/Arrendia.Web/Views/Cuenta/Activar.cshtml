@@ -1,0 +1,13 @@
+@model NuevaContrasenaModelo
+@{
+    ViewData["Title"] = "Activa tu cuenta";
+    Layout = "_LayoutAcceso";
+}
+<div class="col encabezado">
+    <h1>Hola, @Model.Nombre</h1>
+    <p class="muted">Te invitaron a Arrendia. Elige una contraseña para activar tu cuenta.</p>
+</div>
+<form method="post" asp-action="Activar" asp-route-token="@Model.Token" class="col" novalidate data-formulario>
+    <partial name="_NuevaContrasena" model="Model" />
+    <button type="submit" class="btn pri lg blk">Activar y entrar</button>
+</form>

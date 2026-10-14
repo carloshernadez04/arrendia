@@ -66,7 +66,12 @@ compose.yaml           SQL Server + web en local, con volumen persistente (SQL e
     - **Procedimientos almacenados:** generación de cobros, cálculo de mora, registro y aplicación de pagos, activación y cambio de condiciones de contratos, informes y consultas grandes, y todo lo que modifique varias tablas en una sola operación o deba ser atómico. Para estas operaciones la aplicación llama al procedimiento; no las rearma con varias consultas sueltas.
     - **C# (`Services/` y `Data/` de `Arrendia.Web`):** validaciones de formularios y reglas simples (por ejemplo, que el monto sea mayor a 0 y no supere la deuda antes de enviarlo), formatos, cálculos de presentación y mantenimientos sencillos de catálogos (técnicos, conceptos, feriados) con consultas parametrizadas.
     - Si una regla simple también protege dinero, **se valida en los dos lados**: en C# para dar un mensaje rápido al usuario y en el procedimiento como garantía final.
-3. Todo objeto se escribe con su esquema: `dbo.Cargo`, `EXEC dbo.sp_RegistrarPago`.
+3. Todo objeto se escribe con su esquema y en **MAYÚSCULAS con guion bajo**: `dbo.CARGO`, `EXEC dbo.SP_REGISTRAR_PAGO`.
+    - Tablas en singular (`CONDICION_CONTRATO`); llave primaria `ID`; llaves foráneas `<TABLA>_ID` (`CONTRATO_ID`).
+    - Procedimientos `SP_`, vistas `VW_`, funciones `FN_`, triggers `TR_<TABLA>_<ACCION>`, secuencias `SEQ_`.
+    - Restricciones `PK_`, `FK_`, `UQ_`, `CK_`, `DF_`; índices `IX_` y únicos `UX_`.
+    - En C# las clases y propiedades siguen en PascalCase (`ContratoId`). Dapper las une con `DefaultTypeMap.MatchNamesWithUnderscores = true`.
+    - Los scripts que se ejecuten con `sqlcmd` llevan `-I` (o `SET QUOTED_IDENTIFIER ON`): hay índices filtrados y columnas calculadas.
 4. Si el código empieza a usar un procedimiento, vista o tabla nueva, **agrégalo a `deploy/required-db-objects.txt`**. El despliegue verifica que exista antes de publicar.
 5. Consultas siempre **parametrizadas**. Prohibido concatenar texto del usuario en SQL.
 6. Dinero en `decimal` en C# y `DECIMAL(12,2)` en SQL. **Nunca `float` ni `double`** para montos.
