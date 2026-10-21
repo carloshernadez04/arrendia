@@ -26,35 +26,45 @@ public sealed class UnidadesController(IRepositorioPropiedades repositorio) : Co
 
     [Authorize(Roles = Roles.Administrador)]
     [HttpGet("nueva")]
-    public async Task<IActionResult> Nueva(int propiedad, CancellationToken cancelacion)
+    public async Task<IActionResult> Nueva(int? propiedad, string? volver, CancellationToken cancelacion)
     {
-        var p = await repositorio.ObtenerAsync(propiedad, User.Id(), cancelacion);
-        if (p is null)
+        var modelo = new UnidadFormulario { Volver = volver, Tipos = await repositorio.TiposDeUnidadAsync(cancelacion) };
+        if (propiedad is { } id)
         {
-            return NotFound();
+            var p = await repositorio.ObtenerAsync(id, User.Id(), cancelacion);
+            if (p is null)
+            {
+                return NotFound();
+            }
+
+            modelo.PropiedadId = p.Id;
+            modelo.PropiedadNombre = p.Nombre;
+            modelo.AplicaIva = p.Tipo != "Residencial";
+        }
+        else
+        {
+            modelo.Propiedades = await repositorio.ListarAsync(User.Id(), cancelacion);
         }
 
-        return View("Formulario", new UnidadFormulario
-        {
-            PropiedadId = p.Id,
-            PropiedadNombre = p.Nombre,
-            AplicaIva = p.Tipo != "Residencial",
-            Tipos = await repositorio.TiposDeUnidadAsync(cancelacion),
-        });
+        return View("Formulario", modelo);
     }
 
     [Authorize(Roles = Roles.Administrador)]
     [HttpPost("nueva")]
     public async Task<IActionResult> Nueva(UnidadFormulario modelo, CancellationToken cancelacion)
     {
-        var p = await repositorio.ObtenerAsync(modelo.PropiedadId, User.Id(), cancelacion);
+        modelo.Tipos = await repositorio.TiposDeUnidadAsync(cancelacion);
+        var p = modelo.PropiedadId > 0 ? await repositorio.ObtenerAsync(modelo.PropiedadId, User.Id(), cancelacion) : null;
         if (p is null)
         {
-            return NotFound();
+            ModelState.AddModelError(nameof(modelo.PropiedadId), "Elige la propiedad.");
+            modelo.Propiedades = await repositorio.ListarAsync(User.Id(), cancelacion);
+        }
+        else
+        {
+            modelo.PropiedadNombre = p.Nombre;
         }
 
-        modelo.PropiedadNombre = p.Nombre;
-        modelo.Tipos = await repositorio.TiposDeUnidadAsync(cancelacion);
         if (!Validar(modelo))
         {
             return View("Formulario", modelo);
@@ -64,7 +74,7 @@ public sealed class UnidadesController(IRepositorioPropiedades repositorio) : Co
         {
             await repositorio.CrearUnidadAsync(Datos(modelo), User.Id(), cancelacion);
             TempData["Mensaje"] = $"Unidad {modelo.Codigo!.Trim()} agregada.";
-            return RedirectToAction("Detalle", "Propiedades", new { id = modelo.PropiedadId });
+            return Regresar(modelo.Volver, modelo.PropiedadId);
         }
         catch (ReglaDeNegocioException error)
         {
@@ -75,7 +85,7 @@ public sealed class UnidadesController(IRepositorioPropiedades repositorio) : Co
 
     [Authorize(Roles = Roles.Administrador)]
     [HttpGet("{id:int}/editar")]
-    public async Task<IActionResult> Editar(int id, CancellationToken cancelacion)
+    public async Task<IActionResult> Editar(int id, string? volver, CancellationToken cancelacion)
     {
         var u = await repositorio.UnidadAsync(id, User.Id(), cancelacion);
         if (u is null)
@@ -94,6 +104,7 @@ public sealed class UnidadesController(IRepositorioPropiedades repositorio) : Co
             AreaM2 = u.AreaM2,
             RentaReferencia = u.RentaReferencia,
             AplicaIva = u.AplicaIva,
+            Volver = volver,
             Tipos = await repositorio.TiposDeUnidadAsync(cancelacion),
         });
     }
@@ -121,7 +132,7 @@ public sealed class UnidadesController(IRepositorioPropiedades repositorio) : Co
         {
             await repositorio.ActualizarUnidadAsync(id, Datos(modelo), User.Id(), cancelacion);
             TempData["Mensaje"] = $"Unidad {modelo.Codigo!.Trim()} actualizada.";
-            return RedirectToAction("Detalle", "Propiedades", new { id = u.PropiedadId });
+            return Regresar(modelo.Volver, u.PropiedadId);
         }
         catch (ReglaDeNegocioException error)
         {
@@ -132,7 +143,7 @@ public sealed class UnidadesController(IRepositorioPropiedades repositorio) : Co
 
     [Authorize(Roles = Roles.Administrador)]
     [HttpPost("{id:int}/estado")]
-    public async Task<IActionResult> Estado(int id, string estado, CancellationToken cancelacion)
+    public async Task<IActionResult> Estado(int id, string estado, string? volver, CancellationToken cancelacion)
     {
         var u = await repositorio.UnidadAsync(id, User.Id(), cancelacion);
         if (u is null)
@@ -150,8 +161,13 @@ public sealed class UnidadesController(IRepositorioPropiedades repositorio) : Co
             TempData["Error"] = error.Message;
         }
 
-        return RedirectToAction("Detalle", "Propiedades", new { id = u.PropiedadId });
+        return Regresar(volver, u.PropiedadId);
     }
+
+    private IActionResult Regresar(string? volver, int propiedadId) =>
+        volver is not null && Url.IsLocalUrl(volver) && volver.StartsWith("/unidades", StringComparison.Ordinal)
+            ? LocalRedirect(volver)
+            : RedirectToAction("Detalle", "Propiedades", new { id = propiedadId });
 
     private bool Validar(UnidadFormulario modelo)
     {

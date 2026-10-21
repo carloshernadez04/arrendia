@@ -2,6 +2,7 @@
 @{
     ViewData["Title"] = "Unidades";
     var f = Model.Filtro;
+    var aqui = $"{Context.Request.Path}{Context.Request.QueryString}";
 }
 <partial name="_Avisos" />
 <div class="ph">
@@ -9,6 +10,10 @@
         <h2>Unidades</h2>
         <p class="muted">Locales, apartamentos y oficinas de tus propiedades.</p>
     </div>
+    @if (Model.PuedeEditar && Model.Propiedades.Count > 0)
+    {
+        <a class="btn pri" asp-action="Nueva" asp-route-propiedad="@f.PropiedadId" asp-route-volver="@aqui">@Iconos.Svg("plus", "s")Nueva unidad</a>
+    }
 </div>
 <form method="get" class="toolbar" role="search">
     <div class="buscar">@Iconos.Svg("search", "s")<input name="buscar" class="inp" value="@f.Buscar" placeholder="Código, propiedad o inquilino" aria-label="Buscar" /></div>
@@ -32,14 +37,14 @@
         <div class="vacio">
             @Iconos.Svg("search", "xl")
             <b>No hay unidades con este filtro</b>
-            <span>Prueba con otra búsqueda o agrega unidades desde la propiedad.</span>
+            <span>Prueba con otra búsqueda o agrega una con «Nueva unidad».</span>
         </div>
     }
     else
     {
         <div class="tw">
             <table class="tbl">
-                <thead><tr><th>Unidad</th><th>Tipo</th><th class="r">Área</th><th class="r">Renta de referencia</th><th>Estado</th><th>Inquilino</th></tr></thead>
+                <thead><tr><th>Unidad</th><th>Tipo</th><th class="r">Área</th><th class="r">Renta de referencia</th><th>Estado</th><th>Inquilino</th>@if (Model.PuedeEditar) { <th></th> }</tr></thead>
                 <tbody>
                     @foreach (var u in Model.Unidades)
                     {
@@ -50,6 +55,25 @@
                             <td data-l="Renta" class="r num">@Formato.Dinero(u.RentaReferencia)</td>
                             <td data-l="Estado"><span class="chip @Catalogos.ClaseEstado(u.Estado)">@Catalogos.TextoEstado(u.Estado)</span>@if (u.ConAtraso) { <span class="chip bad">Con atraso</span> }</td>
                             <td data-l="Inquilino">@(u.Inquilino ?? "—")</td>
+                            @if (Model.PuedeEditar)
+                            {
+                                <td><div class="acciones">
+                                    <a class="btn sm" asp-action="Editar" asp-route-id="@u.Id" asp-route-volver="@aqui">Editar</a>
+                                    @if (u.Estado != "Ocupada")
+                                    {
+                                        <form method="post" asp-action="Estado" asp-route-id="@u.Id" class="en-linea">
+                                            <input type="hidden" name="volver" value="@aqui" />
+                                            <select name="estado" class="sel sm" aria-label="Estado de @u.Codigo">
+                                                @foreach (var e in Arrendia.Web.Data.RepositorioPropiedades.EstadosManuales)
+                                                {
+                                                    <option value="@e" selected="@(e == u.Estado)">@Catalogos.TextoEstado(e)</option>
+                                                }
+                                            </select>
+                                            <button type="submit" class="btn sm">Cambiar</button>
+                                        </form>
+                                    }
+                                </div></td>
+                            }
                         </tr>
                     }
                 </tbody>

@@ -6,13 +6,27 @@
 <div class="ph">
     <div>
         <h2>@ViewData["Title"]</h2>
-        <p class="muted">@Model.PropiedadNombre</p>
+        <p class="muted">@(Model.PropiedadNombre ?? "Elige la propiedad a la que pertenece.")</p>
     </div>
 </div>
 <form method="post" class="card formulario" novalidate data-formulario>
     <div asp-validation-summary="ModelOnly" class="aviso error"></div>
-    <input type="hidden" asp-for="PropiedadId" />
+    <input type="hidden" asp-for="Volver" />
     <div class="campos">
+        @if (Model.Propiedades.Count > 0)
+        {
+            <div class="fld ancho">
+                <label asp-for="PropiedadId"></label>
+                <select asp-for="PropiedadId" class="sel" asp-items="@(new SelectList(Model.Propiedades, "Id", "Nombre"))">
+                    <option value="0">Elige la propiedad</option>
+                </select>
+                <span asp-validation-for="PropiedadId" class="error-campo"></span>
+            </div>
+        }
+        else
+        {
+            <input type="hidden" asp-for="PropiedadId" />
+        }
         <div class="fld">
             <label asp-for="Codigo"></label>
             <input asp-for="Codigo" class="inp mono" placeholder="L-12 o Apto 5B" />
@@ -50,7 +64,7 @@
         </div>
     </div>
     <div class="pie">
-        <a class="btn" asp-controller="Propiedades" asp-action="Detalle" asp-route-id="@Model.PropiedadId">Cancelar</a>
+        <a class="btn" href="@(Url.IsLocalUrl(Model.Volver) ? Model.Volver : Model.PropiedadId > 0 ? Url.Action("Detalle", "Propiedades", new { id = Model.PropiedadId }) : Url.Action("Index"))">Cancelar</a>
         <button type="submit" class="btn pri">@(nueva ? "Agregar unidad" : "Guardar cambios")</button>
     </div>
 </form>

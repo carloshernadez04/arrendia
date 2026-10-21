@@ -64,9 +64,14 @@ public sealed class UnidadFormulario
 {
     public int? Id { get; set; }
 
+    [Display(Name = "Propiedad")]
     public int PropiedadId { get; set; }
 
     public string? PropiedadNombre { get; set; }
+
+    public string? Volver { get; set; }
+
+    public IReadOnlyList<PropiedadResumen> Propiedades { get; set; } = [];
 
     [Display(Name = "Código")]
     [Required(ErrorMessage = "Escribe el código de la unidad.")]
