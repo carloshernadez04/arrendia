@@ -249,6 +249,15 @@ progress.barra::-moz-progress-bar{background:var(--acento-btn);border-radius:99p
 .ayuda{font-size:13px;color:var(--texto2);background:var(--relleno);border-radius:var(--r-s);padding:8px 12px}
 .ayuda summary{cursor:pointer;color:var(--acento);font-weight:500}
 .ayuda ol{margin:8px 0;padding-left:18px}
+.mapa{position:relative;height:340px;border:1px solid var(--borde);border-radius:var(--r-s);overflow:hidden;background:var(--relleno);z-index:0}
+.mapa.chico{height:200px}
+.mapa .leaflet-container,.mapa.leaflet-container{font:inherit;background:var(--relleno)}
+.mapa .leaflet-control-attribution{font-size:10.5px}
+.mapa-acciones{flex-wrap:wrap;gap:8px;align-items:center}
+.mapa-acciones .btn[hidden]{display:none}
+:root[data-theme="dark"] .mapa .leaflet-tile-pane{filter:invert(1) hue-rotate(180deg) brightness(.9) contrast(.9)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .mapa .leaflet-tile-pane{filter:invert(1) hue-rotate(180deg) brightness(.9) contrast(.9)}}
+@media (max-width:720px){.mapa{height:280px}}
 @media (max-width:1100px){.c4,.c8{grid-column:span 12}}
 @media (max-width:720px){
   .formulario .campos{grid-template-columns:minmax(0,1fr);padding:16px}

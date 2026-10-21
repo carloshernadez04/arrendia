@@ -3,6 +3,11 @@
     var nueva = Model.Id is null;
     ViewData["Title"] = nueva ? "Nueva propiedad" : "Editar propiedad";
 }
+@section Cabecera {
+    <link rel="stylesheet" href="~/lib/leaflet/leaflet.css" />
+    <script src="~/lib/leaflet/leaflet.js" defer></script>
+    <script src="~/js/mapa.js" asp-append-version="true" defer></script>
+}
 <div class="ph">
     <div>
         <h2>@ViewData["Title"]</h2>
@@ -39,10 +44,17 @@
         </div>
         <div class="fld ancho">
             <label asp-for="Ubicacion">Ubicación en el mapa (opcional)</label>
-            <textarea asp-for="Ubicacion" class="txa" rows="2" placeholder="13.7189, -89.7242"></textarea>
+            <span class="hint">Toca el mapa en la entrada de la propiedad o arrastra el pin. También puedes pegar las coordenadas o el enlace largo de Google Maps.</span>
+            <div class="mapa" data-mapa data-campo="Ubicacion" role="application" aria-label="Mapa para elegir la ubicación"></div>
+            <div class="row mapa-acciones">
+                <button type="button" class="btn sm" data-mi-ubicacion>@Iconos.Svg("pin", "s")Usar mi ubicación</button>
+                <button type="button" class="btn sm" data-quitar-ubicacion>Quitar ubicación</button>
+                <span class="hint" data-mapa-aviso aria-live="polite"></span>
+            </div>
+            <textarea asp-for="Ubicacion" class="txa" rows="1" placeholder="13.7189, -89.7242"></textarea>
             <span asp-validation-for="Ubicacion" class="error-campo"></span>
             <details class="ayuda">
-                <summary>¿Cómo obtengo las coordenadas?</summary>
+                <summary>¿Cómo copio las coordenadas desde Google Maps?</summary>
                 <ol>
                     <li>Abre Google Maps y busca la entrada principal.</li>
                     <li>Mantén presionado el punto exacto.</li>

@@ -138,12 +138,12 @@ app.Use(async (contexto, siguiente) =>
     encabezados["X-Content-Type-Options"] = "nosniff";
     encabezados["X-Frame-Options"] = "DENY";
     encabezados["Referrer-Policy"] = "strict-origin-when-cross-origin";
-    encabezados["Permissions-Policy"] = "camera=(), microphone=(), geolocation=(), payment=()";
+    encabezados["Permissions-Policy"] = "camera=(), microphone=(), geolocation=(self), payment=()";
     encabezados["Cross-Origin-Opener-Policy"] = "same-origin";
     encabezados["Cross-Origin-Embedder-Policy"] = "credentialless";
     encabezados["Cross-Origin-Resource-Policy"] = "same-origin";
     encabezados["Content-Security-Policy"] =
-        "default-src 'self'; img-src 'self' data: https://res.cloudinary.com; " +
+        "default-src 'self'; img-src 'self' data: https://res.cloudinary.com https://tile.openstreetmap.org; " +
         "object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'";
     contexto.Response.OnStarting(() =>
     {

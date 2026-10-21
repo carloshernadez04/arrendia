@@ -36,6 +36,20 @@ public class SeguridadTests(WebApplicationFactory<Program> fabrica) : IClassFixt
     }
 
     [Fact]
+    public async Task SoloSePermitenImagenesDeOrigenesConocidosYSinScriptsExternos()
+    {
+        using var cliente = fabrica.CreateClient();
+
+        var respuesta = await cliente.GetAsync(new Uri("/cuenta/entrar", UriKind.Relative));
+        var politica = string.Join(";", respuesta.Headers.GetValues("Content-Security-Policy"));
+
+        Assert.Contains("default-src 'self'", politica, StringComparison.Ordinal);
+        Assert.Contains("img-src 'self' data: https://res.cloudinary.com https://tile.openstreetmap.org;", politica, StringComparison.Ordinal);
+        Assert.DoesNotContain("script-src", politica, StringComparison.Ordinal);
+        Assert.Contains("geolocation=(self)", string.Join(";", respuesta.Headers.GetValues("Permissions-Policy")), StringComparison.Ordinal);
+    }
+
+    [Fact]
     public async Task NoRevelaElServidorWeb()
     {
         using var cliente = fabrica.CreateClient();

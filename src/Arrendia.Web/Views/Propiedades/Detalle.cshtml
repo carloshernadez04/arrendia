@@ -4,6 +4,11 @@
     ViewData["Title"] = p.Nombre;
     var niveles = Model.Unidades.GroupBy(u => u.Nivel ?? "Sin nivel").ToList();
 }
+@section Cabecera {
+    <link rel="stylesheet" href="~/lib/leaflet/leaflet.css" />
+    <script src="~/lib/leaflet/leaflet.js" defer></script>
+    <script src="~/js/mapa.js" asp-append-version="true" defer></script>
+}
 <partial name="_Avisos" />
 <div class="ph">
     <div>
@@ -76,6 +81,10 @@
                     }
                 </dd>
             </dl>
+            @if (p.Latitud is not null)
+            {
+                <div class="mapa chico" data-mapa data-ubicacion="@UbicacionMapa.Texto(p.Latitud, p.Longitud)" data-titulo="@p.Nombre" aria-label="Mapa de @p.Nombre"></div>
+            }
             <a class="btn" href="@UbicacionMapa.EnlaceMaps(p.Nombre, p.Municipio, p.Latitud, p.Longitud)" target="_blank" rel="noopener">@Iconos.Svg("pin", "s")Abrir en Maps</a>
             @if (p.Latitud is null && Model.PuedeEditar)
             {
