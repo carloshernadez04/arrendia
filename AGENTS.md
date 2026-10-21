@@ -2,6 +2,8 @@
 
 Este archivo explica a cualquier asistente de IA (y a cualquier persona nueva) qué es Arrendia, cómo está construido y qué reglas no se pueden romper. Léelo completo antes de proponer o escribir código.
 
+El estado del proyecto y lo que falta está en [`TAREAS.md`](TAREAS.md): revísalo antes de empezar y marca lo que termines.
+
 ## Qué es Arrendia
 
 Sistema web para administrar arrendamientos de plazas comerciales y edificios de apartamentos en El Salvador. Proyecto estudiantil de Programación II (Universidad Doctor Andrés Bello, Regional Sonsonate, Grupo 1).

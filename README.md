@@ -3,6 +3,9 @@
 Sistema de administración de arrendamientos para plazas comerciales y edificios.
 Proyecto de Programación II (16S – G2), Universidad Doctor Andrés Bello, Regional Sonsonate. Grupo 1.
 
+
+Lo que está hecho y lo que falta: [`TAREAS.md`](TAREAS.md).
+
 ## Requisitos
 
 - [.NET SDK 10](https://dotnet.microsoft.com/download/dotnet/10.0)
