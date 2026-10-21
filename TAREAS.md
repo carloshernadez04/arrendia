@@ -42,6 +42,7 @@ Estado del proyecto. Marca `[x]` cuando una tarea quede terminada y desplegada e
 - [x] Seed con catálogos, conceptos, parámetros, plantillas, feriados y usuarios base
 - [x] Lógica: 38 procedimientos, 13 funciones, 10 vistas y 9 triggers, con 72 pruebas
 - [x] Aplicada en QA y en producción
+- [x] Entorno local: SQL Server en Docker con respaldo completo (`Arrendia_completa_v2`) y secretos de usuario
 - [ ] Script de datos de ejemplo solo para QA (propiedades, inquilinos, contratos)
 
 ## Aplicación: base técnica
@@ -62,7 +63,7 @@ Estado del proyecto. Marca `[x]` cuando una tarea quede terminada y desplegada e
 - [ ] Mi cuenta: nombre, contraseña, correo de acceso con confirmación, tema y cerrar sesión en todos los dispositivos
 - [ ] Usuarios y permisos: invitar supervisores, propiedades asignadas, permisos e invitaciones pendientes
 - [ ] Configuración: plantilla de condiciones, conceptos de cobro, catálogos, feriados y parámetros
-- [ ] Propiedades y unidades, con plano de unidades y ubicación en Maps
+- [x] Propiedades y unidades, con plano de unidades y ubicación en Maps
 - [ ] Inquilinos y contactos, con acceso al portal
 - [ ] Contratos: asistente, PDF para firmar, activación con el escaneado y cambio de condiciones
 - [ ] Cargos: cargos manuales, condonación y anulación

@@ -1,0 +1,60 @@
+@model PropiedadFormulario
+@{
+    var nueva = Model.Id is null;
+    ViewData["Title"] = nueva ? "Nueva propiedad" : "Editar propiedad";
+}
+<div class="ph">
+    <div>
+        <h2>@ViewData["Title"]</h2>
+        <p class="muted">Plaza comercial, edificio de apartamentos o mixta.</p>
+    </div>
+</div>
+<form method="post" class="card formulario" novalidate data-formulario>
+    <div asp-validation-summary="ModelOnly" class="aviso error"></div>
+    <div class="campos">
+        <div class="fld ancho">
+            <label asp-for="Nombre"></label>
+            <input asp-for="Nombre" class="inp" placeholder="Ej. Plaza Las Palmas" />
+            <span asp-validation-for="Nombre" class="error-campo"></span>
+        </div>
+        <div class="fld">
+            <label asp-for="Tipo"></label>
+            <select asp-for="Tipo" class="sel" asp-items="@(new SelectList(Catalogos.TiposPropiedad))"></select>
+            <span asp-validation-for="Tipo" class="error-campo"></span>
+        </div>
+        <div class="fld">
+            <label asp-for="Municipio"></label>
+            <input asp-for="Municipio" class="inp" />
+            <span asp-validation-for="Municipio" class="error-campo"></span>
+        </div>
+        <div class="fld ancho">
+            <label asp-for="Direccion"></label>
+            <input asp-for="Direccion" class="inp" placeholder="Calle, número, colonia o kilómetro" />
+            <span asp-validation-for="Direccion" class="error-campo"></span>
+        </div>
+        <div class="fld">
+            <label asp-for="Departamento"></label>
+            <select asp-for="Departamento" class="sel" asp-items="@(new SelectList(Catalogos.Departamentos))"></select>
+            <span asp-validation-for="Departamento" class="error-campo"></span>
+        </div>
+        <div class="fld ancho">
+            <label asp-for="Ubicacion">Ubicación en el mapa (opcional)</label>
+            <textarea asp-for="Ubicacion" class="txa" rows="2" placeholder="13.7189, -89.7242"></textarea>
+            <span asp-validation-for="Ubicacion" class="error-campo"></span>
+            <details class="ayuda">
+                <summary>¿Cómo obtengo las coordenadas?</summary>
+                <ol>
+                    <li>Abre Google Maps y busca la entrada principal.</li>
+                    <li>Mantén presionado el punto exacto.</li>
+                    <li>Toca los números que aparecen (por ejemplo <span class="mono">13.7189, -89.7242</span>) para copiarlos.</li>
+                    <li>Pégalos aquí. También sirve el enlace largo de Google Maps.</li>
+                </ol>
+                <p>Sin coordenadas, el botón de Maps busca por la dirección escrita, que no siempre es exacta.</p>
+            </details>
+        </div>
+    </div>
+    <div class="pie">
+        <a class="btn" href="@(nueva ? Url.Action("Index") : Url.Action("Detalle", new { id = Model.Id }))">Cancelar</a>
+        <button type="submit" class="btn pri">@(nueva ? "Crear propiedad" : "Guardar cambios")</button>
+    </div>
+</form>

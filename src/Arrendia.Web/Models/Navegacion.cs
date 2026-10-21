@@ -14,8 +14,8 @@ public static class Navegacion
         new("Principal", [new("Tablero", "chart", "/tablero")]),
         new("Mantenimientos",
         [
-            new("Propiedades", "building", null),
-            new("Unidades", "door", null),
+            new("Propiedades", "building", "/propiedades"),
+            new("Unidades", "door", "/unidades"),
             new("Inquilinos", "users", null),
             new("Contratos", "file", null),
             new("Técnicos", "wrench", null),

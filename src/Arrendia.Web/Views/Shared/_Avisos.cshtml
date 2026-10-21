@@ -1,0 +1,8 @@
+@if (TempData["Mensaje"] is string mensaje)
+{
+    <div class="aviso ok" role="status">@Iconos.Svg("check", "s")<span>@mensaje</span></div>
+}
+@if (TempData["Error"] is string error)
+{
+    <div class="aviso error" role="alert">@Iconos.Svg("alert", "s")<span>@error</span></div>
+}
