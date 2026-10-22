@@ -12,6 +12,7 @@
 <form method="post" class="card formulario" novalidate data-formulario>
     <div asp-validation-summary="ModelOnly" class="aviso error"></div>
     <input type="hidden" asp-for="Volver" />
+    <input type="hidden" asp-for="NivelActual" />
     <div class="campos">
         @if (Model.Propiedades.Count > 0)
         {
@@ -41,10 +42,18 @@
         </div>
         <div class="fld">
             <label asp-for="Nivel"></label>
-            <input asp-for="Nivel" class="inp" list="niveles" />
-            <datalist id="niveles">
-                @foreach (var n in Catalogos.NivelesSugeridos) { <option value="@n"></option> }
-            </datalist>
+            <select asp-for="Nivel" class="sel">
+                <option value="">Sin nivel (casa o una sola planta)</option>
+                @if (!string.IsNullOrEmpty(Model.NivelActual) && !Catalogos.Niveles.Contains(Model.NivelActual))
+                {
+                    <option value="@Model.NivelActual">@Model.NivelActual</option>
+                }
+                @foreach (var n in Catalogos.Niveles)
+                {
+                    <option value="@n">@n</option>
+                }
+            </select>
+            <span class="hint">Agrupa las unidades por piso en el plano.</span>
             <span asp-validation-for="Nivel" class="error-campo"></span>
         </div>
         <div class="fld">

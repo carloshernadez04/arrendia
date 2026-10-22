@@ -25,38 +25,81 @@
     </div>
 </div>
 <div class="grid">
-    <section class="card c8">
-        <div class="hd">
-            <h3>Plano de unidades</h3>
-            <div class="leyenda">
-                <span><i class="o"></i>Ocupada</span><span><i class="d"></i>Disponible</span><span><i class="m"></i>Mantenimiento</span><span><i class="late"></i>Con atraso</span>
+    @if (Model.EsUnidadUnica)
+    {
+        var u = Model.Unidades[0];
+        <section class="card c8">
+            <div class="hd">
+                <h3>Se alquila completa</h3>
+                <span class="chip @Catalogos.ClaseEstado(u.Estado)">@Catalogos.TextoEstado(u.Estado)</span>
             </div>
-        </div>
-        <div class="bd">
-            @if (Model.Unidades.Count == 0)
-            {
-                <div class="vacio">
-                    @Iconos.Svg("door", "xl")
-                    <b>Esta propiedad no tiene unidades</b>
-                    <span>Agrega los locales, apartamentos u oficinas que se alquilan.</span>
+            <div class="bd col">
+                <dl class="kv">
+                    <dt>Tipo</dt><dd>@u.TipoUnidad</dd>
+                    <dt>Área</dt><dd class="num">@Formato.Area(u.AreaM2)</dd>
+                    <dt>Renta de referencia</dt><dd class="num">@Formato.Dinero(u.RentaReferencia)@(u.AplicaIva ? " + IVA" : "")</dd>
+                    <dt>Inquilino</dt><dd>@(u.Inquilino ?? "Sin inquilino")</dd>
+                </dl>
+                @if (u.ConAtraso)
+                {
+                    <span class="chip bad">Con atraso</span>
+                }
+                @if (Model.PuedeEditar)
+                {
+                    <div class="acciones izquierda">
+                        <a class="btn sm" asp-controller="Unidades" asp-action="Editar" asp-route-id="@u.Id">Editar datos de alquiler</a>
+                        @if (u.Estado != "Ocupada")
+                        {
+                            <form method="post" asp-controller="Unidades" asp-action="Estado" asp-route-id="@u.Id" class="en-linea">
+                                <select name="estado" class="sel sm" aria-label="Estado">
+                                    @foreach (var e in Arrendia.Web.Data.RepositorioPropiedades.EstadosManuales)
+                                    {
+                                        <option value="@e" selected="@(e == u.Estado)">@Catalogos.TextoEstado(e)</option>
+                                    }
+                                </select>
+                                <button type="submit" class="btn sm">Cambiar</button>
+                            </form>
+                        }
+                    </div>
+                }
+            </div>
+        </section>
+    }
+    else
+    {
+        <section class="card c8">
+            <div class="hd">
+                <h3>Plano de unidades</h3>
+                <div class="leyenda">
+                    <span><i class="o"></i>Ocupada</span><span><i class="d"></i>Disponible</span><span><i class="m"></i>Mantenimiento</span><span><i class="late"></i>Con atraso</span>
                 </div>
-            }
-            @foreach (var nivel in niveles)
-            {
-                <div class="lbl">@nivel.Key</div>
-                <div class="umap">
-                    @foreach (var u in nivel)
-                    {
-                        var clase = u.Estado switch { "Ocupada" => "o", "Disponible" => "d", "Mantenimiento" => "m", _ => "x" };
-                        <div class="ut @clase @(u.ConAtraso ? "late" : "")" title="@u.TipoUnidad · @Catalogos.TextoEstado(u.Estado)">
-                            <b>@u.Codigo</b>
-                            <small>@(u.Inquilino ?? Catalogos.TextoEstado(u.Estado))</small>
-                        </div>
-                    }
-                </div>
-            }
-        </div>
-    </section>
+            </div>
+            <div class="bd">
+                @if (Model.Unidades.Count == 0)
+                {
+                    <div class="vacio">
+                        @Iconos.Svg("door", "xl")
+                        <b>Esta propiedad no tiene unidades</b>
+                        <span>Agrega los locales, apartamentos u oficinas que se alquilan.</span>
+                    </div>
+                }
+                @foreach (var nivel in niveles)
+                {
+                    <div class="lbl">@nivel.Key</div>
+                    <div class="umap">
+                        @foreach (var u in nivel)
+                        {
+                            var clase = u.Estado switch { "Ocupada" => "o", "Disponible" => "d", "Mantenimiento" => "m", _ => "x" };
+                            <div class="ut @clase @(u.ConAtraso ? "late" : "")" title="@u.TipoUnidad · @Catalogos.TextoEstado(u.Estado)">
+                                <b>@u.Codigo</b>
+                                <small>@(u.Inquilino ?? Catalogos.TextoEstado(u.Estado))</small>
+                            </div>
+                        }
+                    </div>
+                }
+            </div>
+        </section>
+    }
     <section class="card c4">
         <div class="hd"><h3>Resumen</h3></div>
         <div class="bd col">
@@ -93,7 +136,7 @@
         </div>
     </section>
 </div>
-@if (Model.Unidades.Count > 0)
+@if (Model.Unidades.Count > 0 && !Model.EsUnidadUnica)
 {
     <section class="card espacio">
         <div class="hd"><h3>Unidades</h3></div>

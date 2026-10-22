@@ -101,6 +101,7 @@ public sealed class UnidadesController(IRepositorioPropiedades repositorio) : Co
             Codigo = u.Codigo,
             TipoUnidadId = u.TipoUnidadId,
             Nivel = u.Nivel,
+            NivelActual = u.Nivel,
             AreaM2 = u.AreaM2,
             RentaReferencia = u.RentaReferencia,
             AplicaIva = u.AplicaIva,
@@ -120,6 +121,7 @@ public sealed class UnidadesController(IRepositorioPropiedades repositorio) : Co
         }
 
         modelo.Id = id;
+        modelo.NivelActual = u.Nivel;
         modelo.PropiedadId = u.PropiedadId;
         modelo.PropiedadNombre = u.Propiedad;
         modelo.Tipos = await repositorio.TiposDeUnidadAsync(cancelacion);
@@ -174,6 +176,11 @@ public sealed class UnidadesController(IRepositorioPropiedades repositorio) : Co
         if (modelo.TipoUnidadId is { } tipo && modelo.Tipos.All(t => t.Id != tipo))
         {
             ModelState.AddModelError(nameof(modelo.TipoUnidadId), "Elige un tipo de la lista.");
+        }
+
+        if (!string.IsNullOrEmpty(modelo.Nivel) && !Catalogos.Niveles.Contains(modelo.Nivel) && modelo.Nivel != modelo.NivelActual)
+        {
+            ModelState.AddModelError(nameof(modelo.Nivel), "Elige un nivel de la lista.");
         }
 
         return ModelState.IsValid;
