@@ -29,23 +29,34 @@ public sealed class PropiedadesController(IRepositorioPropiedades repositorio) :
 
     [Authorize(Roles = Roles.Administrador)]
     [HttpGet("nueva")]
-    public IActionResult Nueva() => View("Formulario", new PropiedadFormulario());
+    public async Task<IActionResult> Nueva(CancellationToken cancelacion) =>
+        await FormularioAsync(new PropiedadFormulario(), cancelacion);
 
     [Authorize(Roles = Roles.Administrador)]
     [HttpPost("nueva")]
     public async Task<IActionResult> Nueva(PropiedadFormulario modelo, CancellationToken cancelacion)
     {
+        modelo.Id = null;
+        modelo.Tipos = await repositorio.TiposDeUnidadAsync(cancelacion);
         var datos = Validar(modelo);
-        if (datos is null)
+        var unidad = modelo.UnaSolaUnidad ? ValidarUnidad(modelo) : null;
+        if (datos is null || (modelo.UnaSolaUnidad && unidad is null))
         {
             return View("Formulario", modelo);
         }
 
         try
         {
-            var id = await repositorio.CrearAsync(datos, User.Id(), cancelacion);
+            if (unidad is not null)
+            {
+                var id = await repositorio.CrearConUnidadAsync(datos, unidad, User.Id(), cancelacion);
+                TempData["Mensaje"] = $"«{datos.Nombre}» registrada como unidad única. Ya puedes hacerle un contrato.";
+                return RedirectToAction(nameof(Detalle), new { id });
+            }
+
+            var nuevaId = await repositorio.CrearAsync(datos, User.Id(), cancelacion);
             TempData["Mensaje"] = $"Propiedad «{datos.Nombre}» creada. Ahora agrega sus unidades.";
-            return RedirectToAction(nameof(Detalle), new { id });
+            return RedirectToAction(nameof(Detalle), new { id = nuevaId });
         }
         catch (ReglaDeNegocioException error)
         {
@@ -61,7 +72,7 @@ public sealed class PropiedadesController(IRepositorioPropiedades repositorio) :
         var p = await repositorio.ObtenerAsync(id, User.Id(), cancelacion);
         return p is null
             ? NotFound()
-            : View("Formulario", new PropiedadFormulario
+            : await FormularioAsync(new PropiedadFormulario
             {
                 Id = p.Id,
                 Nombre = p.Nombre,
@@ -70,7 +81,7 @@ public sealed class PropiedadesController(IRepositorioPropiedades repositorio) :
                 Municipio = p.Municipio,
                 Departamento = p.Departamento,
                 Ubicacion = UbicacionMapa.Texto(p.Latitud, p.Longitud),
-            });
+            }, cancelacion);
     }
 
     [Authorize(Roles = Roles.Administrador)]
@@ -78,10 +89,11 @@ public sealed class PropiedadesController(IRepositorioPropiedades repositorio) :
     public async Task<IActionResult> Editar(int id, PropiedadFormulario modelo, CancellationToken cancelacion)
     {
         modelo.Id = id;
+        modelo.UnaSolaUnidad = false;
         var datos = Validar(modelo);
         if (datos is null)
         {
-            return View("Formulario", modelo);
+            return await FormularioAsync(modelo, cancelacion);
         }
 
         if (await repositorio.ObtenerAsync(id, User.Id(), cancelacion) is null)
@@ -98,8 +110,14 @@ public sealed class PropiedadesController(IRepositorioPropiedades repositorio) :
         catch (ReglaDeNegocioException error)
         {
             ModelState.AddModelError(nameof(modelo.Nombre), error.Message);
-            return View("Formulario", modelo);
+            return await FormularioAsync(modelo, cancelacion);
         }
+    }
+
+    private async Task<IActionResult> FormularioAsync(PropiedadFormulario modelo, CancellationToken cancelacion)
+    {
+        modelo.Tipos = await repositorio.TiposDeUnidadAsync(cancelacion);
+        return View("Formulario", modelo);
     }
 
     private DatosPropiedad? Validar(PropiedadFormulario modelo)
@@ -109,9 +127,13 @@ public sealed class PropiedadesController(IRepositorioPropiedades repositorio) :
             ModelState.AddModelError(nameof(modelo.Tipo), "Elige un tipo de la lista.");
         }
 
-        if (modelo.Departamento is not null && !Catalogos.Departamentos.Contains(modelo.Departamento))
+        if (modelo.Departamento is not null && !Territorio.Municipios.ContainsKey(modelo.Departamento))
         {
             ModelState.AddModelError(nameof(modelo.Departamento), "Elige un departamento de la lista.");
+        }
+        else if (modelo.Municipio is not null && !Territorio.Existe(modelo.Departamento, modelo.Municipio))
+        {
+            ModelState.AddModelError(nameof(modelo.Municipio), $"Elige un municipio de {modelo.Departamento}.");
         }
 
         var ubicacion = UbicacionMapa.Interpretar(modelo.Ubicacion);
@@ -120,9 +142,33 @@ public sealed class PropiedadesController(IRepositorioPropiedades repositorio) :
             ModelState.AddModelError(nameof(modelo.Ubicacion), ubicacion.Error);
         }
 
+        if (!modelo.UnaSolaUnidad)
+        {
+            foreach (var campo in new[] { nameof(modelo.AreaM2), nameof(modelo.RentaReferencia), nameof(modelo.TipoUnidadId) })
+            {
+                ModelState.Remove(campo);
+            }
+        }
+
         return ModelState.IsValid
-            ? new DatosPropiedad(modelo.Nombre!.Trim(), modelo.Tipo!, modelo.Direccion!.Trim(), modelo.Municipio!.Trim(), modelo.Departamento!,
+            ? new DatosPropiedad(modelo.Nombre!.Trim(), modelo.Tipo!, modelo.Direccion!.Trim(), modelo.Municipio!, modelo.Departamento!,
                 ubicacion.Latitud, ubicacion.Longitud)
+            : null;
+    }
+
+    private DatosUnidad? ValidarUnidad(PropiedadFormulario modelo)
+    {
+        if (modelo.TipoUnidadId is not { } tipo)
+        {
+            ModelState.AddModelError(nameof(modelo.TipoUnidadId), "Elige el tipo de unidad.");
+        }
+        else if (modelo.Tipos.All(t => t.Id != tipo))
+        {
+            ModelState.AddModelError(nameof(modelo.TipoUnidadId), "Elige un tipo de la lista.");
+        }
+
+        return ModelState.IsValid
+            ? new DatosUnidad(0, Catalogos.CodigoUnidadUnica, modelo.TipoUnidadId!.Value, null, modelo.AreaM2, modelo.RentaReferencia, modelo.AplicaIva)
             : null;
     }
 }

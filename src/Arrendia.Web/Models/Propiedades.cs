@@ -7,15 +7,32 @@ public static class Catalogos
 {
     public static readonly string[] TiposPropiedad = ["Comercial", "Residencial", "Mixta"];
 
-    public static readonly string[] Departamentos =
-    [
-        "Ahuachapán", "Cabañas", "Chalatenango", "Cuscatlán", "La Libertad", "La Paz", "La Unión",
-        "Morazán", "San Miguel", "San Salvador", "San Vicente", "Santa Ana", "Sonsonate", "Usulután",
-    ];
+    public const string CodigoUnidadUnica = "PRINCIPAL";
 
     public static readonly string[] EstadosUnidad = ["Disponible", "Ocupada", "Mantenimiento", "Inactiva"];
 
-    public static readonly string[] NivelesSugeridos = ["Sótano", "Planta baja", "Nivel 1", "Nivel 2", "Nivel 3", "Nivel 4", "Nivel 5"];
+    public static readonly string[] Niveles =
+    [
+        "Sótano 2", "Sótano 1", "Planta baja", "Mezanine",
+        .. Enumerable.Range(2, 19).Select(n => $"Nivel {n}"),
+    ];
+
+    public static int OrdenNivel(string? nivel)
+    {
+        if (string.IsNullOrEmpty(nivel))
+        {
+            return -1;
+        }
+
+        var i = Array.IndexOf(Niveles, nivel);
+        return i < 0 ? int.MaxValue : i;
+    }
+
+    public static IEnumerable<UnidadDetalle> Ordenar(IEnumerable<UnidadDetalle> unidades) =>
+        unidades.OrderBy(u => u.Propiedad, StringComparer.CurrentCulture)
+            .ThenBy(u => OrdenNivel(u.Nivel))
+            .ThenBy(u => u.Codigo.Length)
+            .ThenBy(u => u.Codigo, StringComparer.CurrentCulture);
 
     public static string ClaseEstado(string estado) => estado switch
     {
@@ -47,8 +64,7 @@ public sealed class PropiedadFormulario
     public string? Direccion { get; set; }
 
     [Display(Name = "Municipio")]
-    [Required(ErrorMessage = "Escribe el municipio.")]
-    [StringLength(80, ErrorMessage = "El municipio no puede pasar de 80 caracteres.")]
+    [Required(ErrorMessage = "Elige el municipio.")]
     public string? Municipio { get; set; } = "Sonsonate";
 
     [Display(Name = "Departamento")]
@@ -58,6 +74,24 @@ public sealed class PropiedadFormulario
     [Display(Name = "Ubicación en el mapa")]
     [StringLength(2000)]
     public string? Ubicacion { get; set; }
+
+    public bool UnaSolaUnidad { get; set; }
+
+    [Display(Name = "Tipo de unidad")]
+    public int? TipoUnidadId { get; set; }
+
+    [Display(Name = "Área (m²)")]
+    [Range(typeof(decimal), "0.01", "99999", ErrorMessage = "El área debe ser mayor a 0.")]
+    public decimal? AreaM2 { get; set; }
+
+    [Display(Name = "Renta de referencia")]
+    [Range(typeof(decimal), "0.01", "999999", ErrorMessage = "La renta debe ser mayor a $0.00.")]
+    public decimal? RentaReferencia { get; set; }
+
+    [Display(Name = "Aplica IVA (13 %)")]
+    public bool AplicaIva { get; set; }
+
+    public IReadOnlyList<Opcion> Tipos { get; set; } = [];
 }
 
 public sealed class UnidadFormulario
@@ -84,8 +118,9 @@ public sealed class UnidadFormulario
     public int? TipoUnidadId { get; set; }
 
     [Display(Name = "Nivel")]
-    [StringLength(30, ErrorMessage = "El nivel no puede pasar de 30 caracteres.")]
     public string? Nivel { get; set; } = "Planta baja";
+
+    public string? NivelActual { get; set; }
 
     [Display(Name = "Área (m²)")]
     [Range(typeof(decimal), "0.01", "99999", ErrorMessage = "El área debe ser mayor a 0.")]
@@ -106,6 +141,7 @@ public sealed class PropiedadDetalleModelo
     public required PropiedadResumen Propiedad { get; init; }
     public required IReadOnlyList<UnidadDetalle> Unidades { get; init; }
     public bool PuedeEditar { get; init; }
+    public bool EsUnidadUnica => Unidades.Count == 1 && Unidades[0].Codigo == Catalogos.CodigoUnidadUnica;
 }
 
 public sealed class UnidadesModelo

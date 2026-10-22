@@ -26,7 +26,7 @@ IF NOT EXISTS (SELECT 1 FROM dbo.USUARIO WHERE ROL = 'Administrador')
     VALUES (N'Administrador', N'admin@arrendia.site', NULL, 'Administrador', 0, @SISTEMA);
 
 INSERT INTO dbo.TIPO_UNIDAD (NOMBRE)
-SELECT v.NOMBRE FROM (VALUES (N'Local comercial'), (N'Apartamento'), (N'Oficina'), (N'Bodega')) v (NOMBRE)
+SELECT v.NOMBRE FROM (VALUES (N'Local comercial'), (N'Apartamento'), (N'Oficina'), (N'Bodega'), (N'Casa')) v (NOMBRE)
 WHERE NOT EXISTS (SELECT 1 FROM dbo.TIPO_UNIDAD t WHERE t.NOMBRE = v.NOMBRE);
 
 INSERT INTO dbo.ESPECIALIDAD (NOMBRE)

@@ -258,9 +258,21 @@ progress.barra::-moz-progress-bar{background:var(--acento-btn);border-radius:99p
 :root[data-theme="dark"] .mapa .leaflet-tile-pane{filter:invert(1) hue-rotate(180deg) brightness(.9) contrast(.9)}
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .mapa .leaflet-tile-pane{filter:invert(1) hue-rotate(180deg) brightness(.9) contrast(.9)}}
 @media (max-width:720px){.mapa{height:280px}}
+.opciones{border:0;padding:0;margin:0;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.opciones legend{margin-bottom:8px;padding:0}
+.opcion{display:flex;gap:10px;align-items:flex-start;padding:12px 14px;border:1px solid var(--borde);border-radius:var(--r-s);cursor:pointer;min-height:44px}
+.opcion:has(input:checked){border-color:var(--acento);background:var(--acento-suave)}
+.opcion input{margin-top:3px;width:18px;height:18px;accent-color:var(--acento-btn);flex:none}
+.opcion span{display:flex;flex-direction:column;gap:2px}
+.opcion small{color:var(--texto2);font-size:12.5px}
+.subcampos{border-top:1px solid var(--borde-suave);padding-top:14px}
+.subcampos[hidden]{display:none}
+.campos-internos{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px;margin-top:8px}
+.acciones.izquierda{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-start}
 @media (max-width:1100px){.c4,.c8{grid-column:span 12}}
 @media (max-width:720px){
   .formulario .campos{grid-template-columns:minmax(0,1fr);padding:16px}
+  .opciones,.campos-internos{grid-template-columns:minmax(0,1fr)}
   .kv{grid-template-columns:110px minmax(0,1fr)}
   .tbl thead{display:none}
   .tbl,.tbl tbody,.tbl tr,.tbl td{display:block;width:100%}

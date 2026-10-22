@@ -54,7 +54,7 @@ src/Arrendia.Web       Proyecto único ASP.NET Core MVC:
   Services/            Reglas simples y servicios (PDF, correo, pagos en línea, Cloudinary)
   Data/                Código C# que llama procedimientos almacenados y vistas por su nombre
 tests/Arrendia.Tests   Pruebas
-seed/seed.sql          Datos iniciales; se ejecuta manualmente
+seed/seed.sql          Datos iniciales; cada despliegue a QA y producción inserta los que falten
 deploy/                Dockerfile y required-db-objects.txt
 db-local/              Respaldos .bak locales (ignorado por Git)
 compose.yaml           SQL Server + web en local, con volumen persistente (SQL en localhost,14333)

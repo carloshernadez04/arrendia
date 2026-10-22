@@ -62,6 +62,7 @@ public interface IRepositorioPropiedades
     Task<UnidadDetalle?> UnidadAsync(int id, int usuarioId, CancellationToken cancelacion);
     Task<IReadOnlyList<Opcion>> TiposDeUnidadAsync(CancellationToken cancelacion);
     Task<int> CrearAsync(DatosPropiedad datos, int usuarioId, CancellationToken cancelacion);
+    Task<int> CrearConUnidadAsync(DatosPropiedad datos, DatosUnidad unidad, int usuarioId, CancellationToken cancelacion);
     Task ActualizarAsync(int id, DatosPropiedad datos, int usuarioId, CancellationToken cancelacion);
     Task<int> CrearUnidadAsync(DatosUnidad datos, int usuarioId, CancellationToken cancelacion);
     Task ActualizarUnidadAsync(int id, DatosUnidad datos, int usuarioId, CancellationToken cancelacion);
@@ -131,11 +132,10 @@ public sealed class RepositorioPropiedades(IBaseDatos baseDatos) : IRepositorioP
                  AND (@Estado IS NULL OR u.ESTADO = @Estado)
                  AND (@TipoUnidadId IS NULL OR u.TIPO_UNIDAD_ID = @TipoUnidadId)
                  AND (@Buscar IS NULL OR u.CODIGO LIKE @Buscar OR p.NOMBRE LIKE @Buscar OR i.NOMBRE LIKE @Buscar)
-                ORDER BY p.NOMBRE, u.NIVEL, u.CODIGO
                 """,
             new { UsuarioId = usuarioId, filtro.PropiedadId, filtro.Estado, filtro.TipoUnidadId, Buscar = buscar },
             cancellationToken: cancelacion));
-        return filas.AsList();
+        return [.. Models.Catalogos.Ordenar(filas)];
     }
 
     public async Task<UnidadDetalle?> UnidadAsync(int id, int usuarioId, CancellationToken cancelacion)
@@ -165,6 +165,32 @@ public sealed class RepositorioPropiedades(IBaseDatos baseDatos) : IRepositorioP
             new { datos.Nombre, datos.Tipo, datos.Direccion, datos.Municipio, datos.Departamento, datos.Latitud, datos.Longitud, UsuarioId = usuarioId },
             cancellationToken: cancelacion)));
         await RegistrarAsync(conexion, usuarioId, "Crear", "PROPIEDAD", id, datos.Nombre, cancelacion);
+        return id;
+    }
+
+    public async Task<int> CrearConUnidadAsync(DatosPropiedad datos, DatosUnidad unidad, int usuarioId, CancellationToken cancelacion)
+    {
+        await using var conexion = await baseDatos.AbrirAsync(cancelacion);
+        await using var transaccion = await conexion.BeginTransactionAsync(cancelacion);
+        var id = await ConUnicoAsync("Ya existe una propiedad con ese nombre.", () => conexion.QuerySingleAsync<int>(new CommandDefinition(
+            """
+            INSERT INTO dbo.PROPIEDAD (NOMBRE, TIPO, DIRECCION, MUNICIPIO, DEPARTAMENTO, LATITUD, LONGITUD, CREADO_POR)
+            OUTPUT INSERTED.ID
+            VALUES (@Nombre, @Tipo, @Direccion, @Municipio, @Departamento, @Latitud, @Longitud, @UsuarioId);
+            """,
+            new { datos.Nombre, datos.Tipo, datos.Direccion, datos.Municipio, datos.Departamento, datos.Latitud, datos.Longitud, UsuarioId = usuarioId },
+            transaccion, cancellationToken: cancelacion)));
+        var unidadId = await conexion.QuerySingleAsync<int>(new CommandDefinition(
+            """
+            INSERT INTO dbo.UNIDAD (PROPIEDAD_ID, CODIGO, TIPO_UNIDAD_ID, NIVEL, AREA_M2, RENTA_REFERENCIA, APLICA_IVA, CREADO_POR)
+            OUTPUT INSERTED.ID
+            VALUES (@PropiedadId, @Codigo, @TipoUnidadId, @Nivel, @AreaM2, @RentaReferencia, @AplicaIva, @UsuarioId);
+            """,
+            new { PropiedadId = id, unidad.Codigo, unidad.TipoUnidadId, unidad.Nivel, unidad.AreaM2, unidad.RentaReferencia, unidad.AplicaIva, UsuarioId = usuarioId },
+            transaccion, cancellationToken: cancelacion));
+        await RegistrarAsync(conexion, usuarioId, "Crear", "PROPIEDAD", id, datos.Nombre, cancelacion, transaccion);
+        await RegistrarAsync(conexion, usuarioId, "Crear", "UNIDAD", unidadId, unidad.Codigo, cancelacion, transaccion);
+        await transaccion.CommitAsync(cancelacion);
         return id;
     }
 
@@ -231,13 +257,13 @@ public sealed class RepositorioPropiedades(IBaseDatos baseDatos) : IRepositorioP
             new { Id = id, Estado = estado, UsuarioId = usuarioId }, cancellationToken: cancelacion)));
     }
 
-    private static Task<int> RegistrarAsync(SqlConnection conexion, int usuarioId, string accion, string tabla, int id, string nombre, CancellationToken cancelacion) =>
+    private static Task<int> RegistrarAsync(SqlConnection conexion, int usuarioId, string accion, string tabla, int id, string nombre, CancellationToken cancelacion, System.Data.Common.DbTransaction? transaccion = null) =>
         conexion.ExecuteAsync(new CommandDefinition(
             """
             INSERT INTO dbo.BITACORA (USUARIO_ID, ACCION, TABLA, REGISTRO_ID, DETALLE)
             VALUES (@UsuarioId, @Accion, @Tabla, @Id, (SELECT @Nombre AS nombre FOR JSON PATH, WITHOUT_ARRAY_WRAPPER));
             """,
-            new { UsuarioId = usuarioId, Accion = accion, Tabla = tabla, Id = id, Nombre = nombre }, cancellationToken: cancelacion));
+            new { UsuarioId = usuarioId, Accion = accion, Tabla = tabla, Id = id, Nombre = nombre }, transaccion, cancellationToken: cancelacion));
 
     private static async Task<T> ConUnicoAsync<T>(string mensaje, Func<Task<T>> accion)
     {
