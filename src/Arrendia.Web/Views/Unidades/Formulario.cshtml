@@ -1,0 +1,70 @@
+@model UnidadFormulario
+@{
+    var nueva = Model.Id is null;
+    ViewData["Title"] = nueva ? "Agregar unidad" : "Editar unidad";
+}
+<div class="ph">
+    <div>
+        <h2>@ViewData["Title"]</h2>
+        <p class="muted">@(Model.PropiedadNombre ?? "Elige la propiedad a la que pertenece.")</p>
+    </div>
+</div>
+<form method="post" class="card formulario" novalidate data-formulario>
+    <div asp-validation-summary="ModelOnly" class="aviso error"></div>
+    <input type="hidden" asp-for="Volver" />
+    <div class="campos">
+        @if (Model.Propiedades.Count > 0)
+        {
+            <div class="fld ancho">
+                <label asp-for="PropiedadId"></label>
+                <select asp-for="PropiedadId" class="sel" asp-items="@(new SelectList(Model.Propiedades, "Id", "Nombre"))">
+                    <option value="0">Elige la propiedad</option>
+                </select>
+                <span asp-validation-for="PropiedadId" class="error-campo"></span>
+            </div>
+        }
+        else
+        {
+            <input type="hidden" asp-for="PropiedadId" />
+        }
+        <div class="fld">
+            <label asp-for="Codigo"></label>
+            <input asp-for="Codigo" class="inp mono" placeholder="L-12 o Apto 5B" />
+            <span asp-validation-for="Codigo" class="error-campo"></span>
+        </div>
+        <div class="fld">
+            <label asp-for="TipoUnidadId"></label>
+            <select asp-for="TipoUnidadId" class="sel" asp-items="@(new SelectList(Model.Tipos, "Id", "Nombre"))">
+                <option value="">Elige el tipo</option>
+            </select>
+            <span asp-validation-for="TipoUnidadId" class="error-campo"></span>
+        </div>
+        <div class="fld">
+            <label asp-for="Nivel"></label>
+            <input asp-for="Nivel" class="inp" list="niveles" />
+            <datalist id="niveles">
+                @foreach (var n in Catalogos.NivelesSugeridos) { <option value="@n"></option> }
+            </datalist>
+            <span asp-validation-for="Nivel" class="error-campo"></span>
+        </div>
+        <div class="fld">
+            <label asp-for="AreaM2"></label>
+            <input asp-for="AreaM2" class="inp num" type="number" step="0.01" min="0.01" inputmode="decimal" />
+            <span asp-validation-for="AreaM2" class="error-campo"></span>
+        </div>
+        <div class="fld">
+            <label asp-for="RentaReferencia"></label>
+            <div class="pre"><span>$</span><input asp-for="RentaReferencia" class="inp num" type="number" step="0.01" min="0.01" inputmode="decimal" /></div>
+            <span class="hint">Se sugiere al crear un contrato. Sin IVA.</span>
+            <span asp-validation-for="RentaReferencia" class="error-campo"></span>
+        </div>
+        <div class="fld">
+            <span class="etiqueta">IVA</span>
+            <label class="chk"><input asp-for="AplicaIva" /> <span>Aplica IVA (13 %): locales y oficinas</span></label>
+        </div>
+    </div>
+    <div class="pie">
+        <a class="btn" href="@(Url.IsLocalUrl(Model.Volver) ? Model.Volver : Model.PropiedadId > 0 ? Url.Action("Detalle", "Propiedades", new { id = Model.PropiedadId }) : Url.Action("Index"))">Cancelar</a>
+        <button type="submit" class="btn pri">@(nueva ? "Agregar unidad" : "Guardar cambios")</button>
+    </div>
+</form>

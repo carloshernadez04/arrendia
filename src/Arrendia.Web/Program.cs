@@ -22,6 +22,7 @@ builder.Services.AddHttpContextAccessor();
 builder.Services.AddSingleton(TimeProvider.System);
 builder.Services.AddScoped<IBaseDatos, BaseDatos>();
 builder.Services.AddScoped<IRepositorioCuentas, RepositorioCuentas>();
+builder.Services.AddScoped<IRepositorioPropiedades, RepositorioPropiedades>();
 builder.Services.AddScoped<IPasswordHasher<UsuarioAcceso>, PasswordHasher<UsuarioAcceso>>();
 builder.Services.AddScoped<ServicioAcceso>();
 builder.Services.AddScoped<ValidacionSesion>();
@@ -76,7 +77,22 @@ builder.Services.AddRateLimiter(opciones =>
         _ => new FixedWindowRateLimiterOptions { PermitLimit = 10, Window = TimeSpan.FromMinutes(1), QueueLimit = 0 }));
 });
 
-builder.Services.AddControllersWithViews(opciones => opciones.Filters.Add(new AutoValidateAntiforgeryTokenAttribute()));
+builder.Services.AddControllersWithViews(opciones =>
+{
+    opciones.Filters.Add(new AutoValidateAntiforgeryTokenAttribute());
+    var mensajes = opciones.ModelBindingMessageProvider;
+    mensajes.SetValueMustBeANumberAccessor(campo => $"{campo} debe ser un número.");
+    mensajes.SetAttemptedValueIsInvalidAccessor((valor, campo) => $"«{valor}» no es un valor válido para {campo}.");
+    mensajes.SetNonPropertyAttemptedValueIsInvalidAccessor(valor => $"«{valor}» no es un valor válido.");
+    mensajes.SetValueIsInvalidAccessor(valor => $"«{valor}» no es un valor válido.");
+    mensajes.SetValueMustNotBeNullAccessor(campo => $"{campo} es obligatorio.");
+    mensajes.SetMissingBindRequiredValueAccessor(campo => $"Falta {campo}.");
+    mensajes.SetMissingKeyOrValueAccessor(() => "Falta un valor.");
+    mensajes.SetMissingRequestBodyRequiredValueAccessor(() => "Faltan los datos del formulario.");
+    mensajes.SetUnknownValueIsInvalidAccessor(campo => $"El valor de {campo} no es válido.");
+    mensajes.SetNonPropertyUnknownValueIsInvalidAccessor(() => "El valor no es válido.");
+    mensajes.SetNonPropertyValueMustBeANumberAccessor(() => "Debe ser un número.");
+});
 
 var salud = builder.Services.AddHealthChecks();
 if (!string.IsNullOrEmpty(builder.Configuration.GetConnectionString(BaseDatos.NombreCadena)))
@@ -122,12 +138,12 @@ app.Use(async (contexto, siguiente) =>
     encabezados["X-Content-Type-Options"] = "nosniff";
     encabezados["X-Frame-Options"] = "DENY";
     encabezados["Referrer-Policy"] = "strict-origin-when-cross-origin";
-    encabezados["Permissions-Policy"] = "camera=(), microphone=(), geolocation=(), payment=()";
+    encabezados["Permissions-Policy"] = "camera=(), microphone=(), geolocation=(self), payment=()";
     encabezados["Cross-Origin-Opener-Policy"] = "same-origin";
     encabezados["Cross-Origin-Embedder-Policy"] = "credentialless";
     encabezados["Cross-Origin-Resource-Policy"] = "same-origin";
     encabezados["Content-Security-Policy"] =
-        "default-src 'self'; img-src 'self' data: https://res.cloudinary.com; " +
+        "default-src 'self'; img-src 'self' data: https://res.cloudinary.com https://tile.openstreetmap.org; " +
         "object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'";
     contexto.Response.OnStarting(() =>
     {

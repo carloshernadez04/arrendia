@@ -3,6 +3,9 @@
 Sistema de administración de arrendamientos para plazas comerciales y edificios.
 Proyecto de Programación II (16S – G2), Universidad Doctor Andrés Bello, Regional Sonsonate. Grupo 1.
 
+
+Lo que está hecho y lo que falta: [`TAREAS.md`](TAREAS.md).
+
 ## Requisitos
 
 - [.NET SDK 10](https://dotnet.microsoft.com/download/dotnet/10.0)
@@ -28,36 +31,39 @@ dotnet format Arrendia.sln          # corrige el formato antes de hacer push
 dotnet run --project src/Arrendia.Web
 ```
 
-## Ejecutar en local con Docker
+## Ejecutar en local
 
-Requiere [Docker Desktop](https://www.docker.com/products/docker-desktop/) abierto.
+Requiere [Docker Desktop](https://www.docker.com/products/docker-desktop/) abierto. Todo corre en tu computadora: no se toca la base del servidor.
 
-1. Copia `.env.example` como `.env` y cambia la contraseña de SQL Server.
-2. Levanta todo:
+1. Copia `.env.example` como `.env` y escribe una contraseña para SQL Server.
+2. Pide el respaldo completo más reciente (`Arrendia_completa_v*.bak`, con tablas, procedimientos y seed) y cópialo en `db-local/`.
+3. Levanta solo SQL Server:
    ```bash
-   docker compose up -d --build
+   docker compose up -d db
    ```
-3. Abre la aplicación en <http://localhost:5080>. SQL Server queda en `localhost,14333` (usuario `sa`) para conectarte con SSMS.
-
-**Los datos no se pierden:** viven en el volumen `arrendia-sqldata` y se conservan al reiniciar la computadora, al hacer `docker compose down` o al reconstruir la web. Solo se borran con `docker compose down -v`, que **no** deben usar salvo que quieran empezar de cero.
-
-### Estructura de la base de datos
-
-La estructura (tablas, procedimientos y vistas) no vive en este repositorio. Para tenerla en local:
-
-1. Pide el respaldo más reciente (`.bak`) al responsable de la base y cópialo en la carpeta `db-local/`.
-2. En SSMS conéctate a `localhost,14333` y restaura el respaldo desde `/var/opt/mssql/backup/`.
-3. Si hace falta, carga los datos iniciales:
+4. Restaura el respaldo como base `Arrendia` (en SSMS conéctate a `localhost,14333` con `sa` y restaura desde `/var/opt/mssql/backup/`, o por consola):
    ```bash
-   docker exec arrendia-db /opt/mssql-tools18/bin/sqlcmd -C -I -S localhost -U sa -P "TU_CLAVE" -d Arrendia -i /seed/seed.sql
+   docker exec arrendia-db /opt/mssql-tools18/bin/sqlcmd -C -S localhost -U sa -P "TU_CLAVE" -Q "RESTORE DATABASE Arrendia FROM DISK='/var/opt/mssql/backup/ARCHIVO.bak' WITH MOVE 'ArrendiaPrueba' TO '/var/opt/mssql/data/Arrendia.mdf', MOVE 'ArrendiaPrueba_log' TO '/var/opt/mssql/data/Arrendia_log.ldf', REPLACE"
    ```
+   En Git Bash antepón `MSYS_NO_PATHCONV=1` para que no cambie las rutas.
+5. Guarda la cadena de conexión en tus secretos de usuario (una sola vez, no se sube al repositorio):
+   ```bash
+   dotnet user-secrets set "ConnectionStrings:Arrendia" "Server=localhost,14333;Database=Arrendia;User Id=sa;Password=TU_CLAVE;TrustServerCertificate=True" --project src/Arrendia.Web
+   ```
+6. Corre la web con F5 en Visual Studio o con `dotnet run --project src/Arrendia.Web` y abre <http://localhost:5247>.
+
+Para volver a empezar con la base limpia, repite el paso 4 (`REPLACE` la sobrescribe).
+
+**Los datos no se pierden:** viven en el volumen `arrendia-sqldata` y se conservan al reiniciar la computadora o al hacer `docker compose down`. Solo se borran con `docker compose down -v`.
+
+También puedes levantar la web dentro de Docker con `docker compose up -d --build` (queda en <http://localhost:5080>).
 
 ### Primer administrador
 
 El seed crea al administrador sin contraseña. Para activarlo, genera su enlace (vence en 7 días y se usa una sola vez):
 
 ```bash
-dotnet run --project src/Arrendia.Web -- activar-admin admin@arrendia.site      # en tu computadora
+dotnet run --project src/Arrendia.Web -- activar-admin                         # en tu computadora
 docker exec arrendia-web-qa dotnet Arrendia.Web.dll activar-admin               # en el servidor
 ```
 
