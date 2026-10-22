@@ -133,6 +133,9 @@ jobs:
       - name: Verificar que la base de producción tenga los objetos requeridos
         run: deploy/scripts/verificar-bd.sh ArrendiaProd
 
+      - name: Agregar a la base de producción los datos iniciales que falten
+        run: deploy/scripts/aplicar-seed.sh ArrendiaProd
+
       - name: Iniciar sesión en el registro
         run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u "${{ github.actor }}" --password-stdin
 
