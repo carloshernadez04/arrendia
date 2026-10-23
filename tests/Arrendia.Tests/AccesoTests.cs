@@ -12,6 +12,9 @@ public partial class AccesoTests(WebApplicationFactory<Program> fabrica) : IClas
     [Theory]
     [InlineData("/tablero")]
     [InlineData("/portal")]
+    [InlineData("/propiedades")]
+    [InlineData("/propiedades/nueva")]
+    [InlineData("/unidades")]
     public async Task SinSesionLasPaginasPrivadasMandanAEntrar(string ruta)
     {
         using var cliente = ClienteSinRedirecciones();

@@ -1,0 +1,131 @@
+@model PropiedadFormulario
+@{
+    var nueva = Model.Id is null;
+    ViewData["Title"] = nueva ? "Nueva propiedad" : "Editar propiedad";
+}
+@section Cabecera {
+    <link rel="stylesheet" href="~/lib/leaflet/leaflet.css" />
+    <script src="~/lib/leaflet/leaflet.js" defer></script>
+    <script src="~/js/mapa.js" asp-append-version="true" defer></script>
+}
+<div class="ph">
+    <div>
+        <h2>@ViewData["Title"]</h2>
+        <p class="muted">Plaza, edificio, casa o local independiente.</p>
+    </div>
+</div>
+<form method="post" class="card formulario" novalidate data-formulario>
+    <div asp-validation-summary="ModelOnly" class="aviso error"></div>
+    <div class="campos">
+        @if (nueva)
+        {
+            <fieldset class="fld ancho opciones">
+                <legend class="etiqueta">¿Qué vas a registrar?</legend>
+                <label class="opcion">
+                    <input type="radio" name="UnaSolaUnidad" value="false" checked="@(!Model.UnaSolaUnidad)" />
+                    <span><b>Un edificio o plaza con varias unidades</b><small>Después agregas cada local, apartamento u oficina.</small></span>
+                </label>
+                <label class="opcion">
+                    <input type="radio" name="UnaSolaUnidad" value="true" checked="@Model.UnaSolaUnidad" />
+                    <span><b>Una casa o un local independiente</b><small>Se alquila completo; se registra con una sola unidad.</small></span>
+                </label>
+            </fieldset>
+        }
+        <div class="fld ancho">
+            <label asp-for="Nombre"></label>
+            <input asp-for="Nombre" class="inp" placeholder="Ej. Plaza Las Palmas o Casa Colonia Las Flores" />
+            <span asp-validation-for="Nombre" class="error-campo"></span>
+        </div>
+        <div class="fld">
+            <label asp-for="Tipo"></label>
+            <select asp-for="Tipo" class="sel" asp-items="@(new SelectList(Catalogos.TiposPropiedad))"></select>
+            <span class="hint">Residencial: casas y apartamentos. Comercial: locales y oficinas.</span>
+            <span asp-validation-for="Tipo" class="error-campo"></span>
+        </div>
+        <div class="fld">
+            <label asp-for="Departamento"></label>
+            <select asp-for="Departamento" class="sel" asp-items="@(new SelectList(Territorio.Departamentos))"></select>
+            <span asp-validation-for="Departamento" class="error-campo"></span>
+        </div>
+        <div class="fld">
+            <label for="Municipio">Municipio</label>
+            <select id="Municipio" name="Municipio" class="sel" data-depende-de="Departamento">
+                @if (!string.IsNullOrEmpty(Model.Municipio) && !Territorio.Existe(Model.Departamento, Model.Municipio))
+                {
+                    <option value="@Model.Municipio" selected>@Model.Municipio (elige uno de la lista)</option>
+                }
+                @foreach (var departamento in Territorio.Departamentos)
+                {
+                    <optgroup label="@departamento">
+                        @foreach (var municipio in Territorio.Municipios[departamento])
+                        {
+                            <option value="@municipio" selected="@(departamento == Model.Departamento && municipio == Model.Municipio)">@municipio</option>
+                        }
+                    </optgroup>
+                }
+            </select>
+            <span asp-validation-for="Municipio" class="error-campo"></span>
+        </div>
+        <div class="fld ancho">
+            <label asp-for="Direccion"></label>
+            <input asp-for="Direccion" class="inp" placeholder="Calle, número, colonia o kilómetro" />
+            <span asp-validation-for="Direccion" class="error-campo"></span>
+        </div>
+        @if (nueva)
+        {
+            <div class="fld ancho subcampos" data-mostrar-si="UnaSolaUnidad">
+                <span class="etiqueta">Datos para alquilarla</span>
+                <div class="campos-internos">
+                    <div class="fld">
+                        <label asp-for="TipoUnidadId"></label>
+                        <select asp-for="TipoUnidadId" class="sel" asp-items="@(new SelectList(Model.Tipos, "Id", "Nombre"))">
+                            <option value="">Elige el tipo</option>
+                        </select>
+                        <span asp-validation-for="TipoUnidadId" class="error-campo"></span>
+                    </div>
+                    <div class="fld">
+                        <label asp-for="AreaM2"></label>
+                        <input asp-for="AreaM2" class="inp num" type="number" step="0.01" min="0.01" inputmode="decimal" />
+                        <span asp-validation-for="AreaM2" class="error-campo"></span>
+                    </div>
+                    <div class="fld">
+                        <label asp-for="RentaReferencia"></label>
+                        <div class="pre"><span>$</span><input asp-for="RentaReferencia" class="inp num" type="number" step="0.01" min="0.01" inputmode="decimal" /></div>
+                        <span asp-validation-for="RentaReferencia" class="error-campo"></span>
+                    </div>
+                    <div class="fld">
+                        <span class="etiqueta">IVA</span>
+                        <label class="chk"><input asp-for="AplicaIva" /> <span>Aplica IVA (13 %)</span></label>
+                        <span class="hint">La vivienda normalmente no lleva IVA.</span>
+                    </div>
+                </div>
+            </div>
+        }
+        <div class="fld ancho">
+            <label asp-for="Ubicacion">Ubicación en el mapa (opcional)</label>
+            <span class="hint">Toca el mapa en la entrada de la propiedad o arrastra el pin. También puedes pegar las coordenadas o el enlace largo de Google Maps.</span>
+            <div class="mapa" data-mapa data-campo="Ubicacion" role="application" aria-label="Mapa para elegir la ubicación"></div>
+            <div class="row mapa-acciones">
+                <button type="button" class="btn sm" data-mi-ubicacion>@Iconos.Svg("pin", "s")Usar mi ubicación</button>
+                <button type="button" class="btn sm" data-quitar-ubicacion>Quitar ubicación</button>
+                <span class="hint" data-mapa-aviso aria-live="polite"></span>
+            </div>
+            <textarea asp-for="Ubicacion" class="txa" rows="1" placeholder="13.7189, -89.7242"></textarea>
+            <span asp-validation-for="Ubicacion" class="error-campo"></span>
+            <details class="ayuda">
+                <summary>¿Cómo copio las coordenadas desde Google Maps?</summary>
+                <ol>
+                    <li>Abre Google Maps y busca la entrada principal.</li>
+                    <li>Mantén presionado el punto exacto.</li>
+                    <li>Toca los números que aparecen (por ejemplo <span class="mono">13.7189, -89.7242</span>) para copiarlos.</li>
+                    <li>Pégalos aquí. También sirve el enlace largo de Google Maps.</li>
+                </ol>
+                <p>Sin coordenadas, el botón de Maps busca por la dirección escrita, que no siempre es exacta.</p>
+            </details>
+        </div>
+    </div>
+    <div class="pie">
+        <a class="btn" href="@(nueva ? Url.Action("Index") : Url.Action("Detalle", new { id = Model.Id }))">Cancelar</a>
+        <button type="submit" class="btn pri">@(nueva ? "Guardar" : "Guardar cambios")</button>
+    </div>
+</form>

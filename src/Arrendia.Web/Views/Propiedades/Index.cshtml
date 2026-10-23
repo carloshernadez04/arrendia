@@ -1,0 +1,57 @@
+@model IReadOnlyList<Arrendia.Web.Data.PropiedadResumen>
+@{
+    ViewData["Title"] = "Propiedades";
+}
+<partial name="_Avisos" />
+<div class="ph">
+    <div>
+        <h2>Propiedades</h2>
+        <p class="muted">@Model.Count @(Model.Count == 1 ? "propiedad" : "propiedades") · @Model.Sum(p => p.Unidades) unidades</p>
+    </div>
+    @if (User.EsAdministrador())
+    {
+        <a class="btn pri" asp-action="Nueva">@Iconos.Svg("plus", "s")Nueva propiedad</a>
+    }
+</div>
+@if (Model.Count == 0)
+{
+    <div class="card">
+        <div class="vacio">
+            @Iconos.Svg("building", "xl")
+            <b>Todavía no hay propiedades</b>
+            <span>@(User.EsAdministrador() ? "Crea la primera plaza o edificio para empezar a registrar sus unidades." : "La administración todavía no te asigna propiedades.")</span>
+        </div>
+    </div>
+}
+else
+{
+    <div class="pgrid">
+        @foreach (var p in Model)
+        {
+            <a class="card pcard" asp-action="Detalle" asp-route-id="@p.Id">
+                <div class="plan" aria-hidden="true">
+                    <div class="mini">
+                        @for (var i = 0; i < p.Ocupadas; i++) { <i class="o"></i> }
+                        @for (var i = 0; i < p.Disponibles; i++) { <i class="d"></i> }
+                        @for (var i = 0; i < p.EnMantenimiento; i++) { <i class="m"></i> }
+                        @for (var i = 0; i < p.Inactivas; i++) { <i class="x"></i> }
+                    </div>
+                </div>
+                <div class="info">
+                    <div class="row sp"><b class="nombre">@p.Nombre</b><span class="chip nd">@p.Tipo</span></div>
+                    <span class="muted fila-ic">@Iconos.Svg("pin", "s") @p.Direccion, @p.Municipio</span>
+                    <div class="row sp"><span class="muted">@p.Ocupadas de @(p.Unidades - p.Inactivas) unidades ocupadas</span><b class="num">@p.Ocupacion%</b></div>
+                    <progress class="barra" value="@p.Ocupacion" max="100">@p.Ocupacion%</progress>
+                    @if (p.CargosVencidos > 0)
+                    {
+                        <span class="chip bad">@p.CargosVencidos @(p.CargosVencidos == 1 ? "cargo vencido" : "cargos vencidos")</span>
+                    }
+                    else
+                    {
+                        <span class="chip ok">Sin cargos vencidos</span>
+                    }
+                </div>
+            </a>
+        }
+    </div>
+}

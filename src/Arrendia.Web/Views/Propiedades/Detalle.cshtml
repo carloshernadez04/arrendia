@@ -1,0 +1,180 @@
+@model PropiedadDetalleModelo
+@{
+    var p = Model.Propiedad;
+    ViewData["Title"] = p.Nombre;
+    var niveles = Model.Unidades.GroupBy(u => u.Nivel ?? "Sin nivel").ToList();
+}
+@section Cabecera {
+    <link rel="stylesheet" href="~/lib/leaflet/leaflet.css" />
+    <script src="~/lib/leaflet/leaflet.js" defer></script>
+    <script src="~/js/mapa.js" asp-append-version="true" defer></script>
+}
+<partial name="_Avisos" />
+<div class="ph">
+    <div>
+        <h2>@p.Nombre</h2>
+        <p class="muted">@p.Direccion · @p.Municipio, @p.Departamento</p>
+    </div>
+    <div class="row">
+        <a class="btn" asp-action="Index">@Iconos.Svg("chevL", "s")Volver</a>
+        @if (Model.PuedeEditar)
+        {
+            <a class="btn" asp-action="Editar" asp-route-id="@p.Id">@Iconos.Svg("edit", "s")Editar</a>
+            <a class="btn pri" asp-controller="Unidades" asp-action="Nueva" asp-route-propiedad="@p.Id">@Iconos.Svg("plus", "s")Agregar unidad</a>
+        }
+    </div>
+</div>
+<div class="grid">
+    @if (Model.EsUnidadUnica)
+    {
+        var u = Model.Unidades[0];
+        <section class="card c8">
+            <div class="hd">
+                <h3>Se alquila completa</h3>
+                <span class="chip @Catalogos.ClaseEstado(u.Estado)">@Catalogos.TextoEstado(u.Estado)</span>
+            </div>
+            <div class="bd col">
+                <dl class="kv">
+                    <dt>Tipo</dt><dd>@u.TipoUnidad</dd>
+                    <dt>Área</dt><dd class="num">@Formato.Area(u.AreaM2)</dd>
+                    <dt>Renta de referencia</dt><dd class="num">@Formato.Dinero(u.RentaReferencia)@(u.AplicaIva ? " + IVA" : "")</dd>
+                    <dt>Inquilino</dt><dd>@(u.Inquilino ?? "Sin inquilino")</dd>
+                </dl>
+                @if (u.ConAtraso)
+                {
+                    <span class="chip bad">Con atraso</span>
+                }
+                @if (Model.PuedeEditar)
+                {
+                    <div class="acciones izquierda">
+                        <a class="btn sm" asp-controller="Unidades" asp-action="Editar" asp-route-id="@u.Id">Editar datos de alquiler</a>
+                        @if (u.Estado != "Ocupada")
+                        {
+                            <form method="post" asp-controller="Unidades" asp-action="Estado" asp-route-id="@u.Id" class="en-linea">
+                                <select name="estado" class="sel sm" aria-label="Estado">
+                                    @foreach (var e in Arrendia.Web.Data.RepositorioPropiedades.EstadosManuales)
+                                    {
+                                        <option value="@e" selected="@(e == u.Estado)">@Catalogos.TextoEstado(e)</option>
+                                    }
+                                </select>
+                                <button type="submit" class="btn sm">Cambiar</button>
+                            </form>
+                        }
+                    </div>
+                }
+            </div>
+        </section>
+    }
+    else
+    {
+        <section class="card c8">
+            <div class="hd">
+                <h3>Plano de unidades</h3>
+                <div class="leyenda">
+                    <span><i class="o"></i>Ocupada</span><span><i class="d"></i>Disponible</span><span><i class="m"></i>Mantenimiento</span><span><i class="late"></i>Con atraso</span>
+                </div>
+            </div>
+            <div class="bd">
+                @if (Model.Unidades.Count == 0)
+                {
+                    <div class="vacio">
+                        @Iconos.Svg("door", "xl")
+                        <b>Esta propiedad no tiene unidades</b>
+                        <span>Agrega los locales, apartamentos u oficinas que se alquilan.</span>
+                    </div>
+                }
+                @foreach (var nivel in niveles)
+                {
+                    <div class="lbl">@nivel.Key</div>
+                    <div class="umap">
+                        @foreach (var u in nivel)
+                        {
+                            var clase = u.Estado switch { "Ocupada" => "o", "Disponible" => "d", "Mantenimiento" => "m", _ => "x" };
+                            <div class="ut @clase @(u.ConAtraso ? "late" : "")" title="@u.TipoUnidad · @Catalogos.TextoEstado(u.Estado)">
+                                <b>@u.Codigo</b>
+                                <small>@(u.Inquilino ?? Catalogos.TextoEstado(u.Estado))</small>
+                            </div>
+                        }
+                    </div>
+                }
+            </div>
+        </section>
+    }
+    <section class="card c4">
+        <div class="hd"><h3>Resumen</h3></div>
+        <div class="bd col">
+            <div>
+                <div class="row sp"><span class="muted">Ocupación</span><b class="num">@p.Ocupacion%</b></div>
+                <progress class="barra" value="@p.Ocupacion" max="100">@p.Ocupacion%</progress>
+            </div>
+            <dl class="kv">
+                <dt>Tipo</dt><dd>@p.Tipo</dd>
+                <dt>Unidades</dt><dd>@p.Unidades</dd>
+                <dt>Disponibles</dt><dd>@p.Disponibles</dd>
+                <dt>En mantenimiento</dt><dd>@p.EnMantenimiento</dd>
+                <dt>Ubicación</dt>
+                <dd>
+                    @if (p.Latitud is not null)
+                    {
+                        <span class="mono">@UbicacionMapa.Texto(p.Latitud, p.Longitud)</span>
+                    }
+                    else
+                    {
+                        <span class="chip warn">Solo por dirección</span>
+                    }
+                </dd>
+            </dl>
+            @if (p.Latitud is not null)
+            {
+                <div class="mapa chico" data-mapa data-ubicacion="@UbicacionMapa.Texto(p.Latitud, p.Longitud)" data-titulo="@p.Nombre" aria-label="Mapa de @p.Nombre"></div>
+            }
+            <a class="btn" href="@UbicacionMapa.EnlaceMaps(p.Nombre, p.Municipio, p.Latitud, p.Longitud)" target="_blank" rel="noopener">@Iconos.Svg("pin", "s")Abrir en Maps</a>
+            @if (p.Latitud is null && Model.PuedeEditar)
+            {
+                <span class="hint">Sin coordenadas, Maps busca por la dirección escrita y puede equivocarse. <a asp-action="Editar" asp-route-id="@p.Id">Fijar la ubicación exacta</a>.</span>
+            }
+        </div>
+    </section>
+</div>
+@if (Model.Unidades.Count > 0 && !Model.EsUnidadUnica)
+{
+    <section class="card espacio">
+        <div class="hd"><h3>Unidades</h3></div>
+        <div class="tw">
+            <table class="tbl">
+                <thead><tr><th>Unidad</th><th>Tipo</th><th class="r">Área</th><th class="r">Renta de referencia</th><th>Estado</th><th>Inquilino</th>@if (Model.PuedeEditar) { <th></th> }</tr></thead>
+                <tbody>
+                    @foreach (var u in Model.Unidades)
+                    {
+                        <tr>
+                            <td data-l="Unidad"><b class="mono">@u.Codigo</b><small class="muted bloque">@(u.Nivel ?? "")</small></td>
+                            <td data-l="Tipo">@u.TipoUnidad</td>
+                            <td data-l="Área" class="r num">@Formato.Area(u.AreaM2)</td>
+                            <td data-l="Renta" class="r num">@Formato.Dinero(u.RentaReferencia)@(u.AplicaIva ? " + IVA" : "")</td>
+                            <td data-l="Estado"><span class="chip @Catalogos.ClaseEstado(u.Estado)">@Catalogos.TextoEstado(u.Estado)</span></td>
+                            <td data-l="Inquilino">@(u.Inquilino ?? "—")</td>
+                            @if (Model.PuedeEditar)
+                            {
+                                <td><div class="acciones">
+                                    <a class="btn sm" asp-controller="Unidades" asp-action="Editar" asp-route-id="@u.Id">Editar</a>
+                                    @if (u.Estado != "Ocupada")
+                                    {
+                                        <form method="post" asp-controller="Unidades" asp-action="Estado" asp-route-id="@u.Id" class="en-linea">
+                                            <select name="estado" class="sel sm" aria-label="Estado de @u.Codigo">
+                                                @foreach (var e in Arrendia.Web.Data.RepositorioPropiedades.EstadosManuales)
+                                                {
+                                                    <option value="@e" selected="@(e == u.Estado)">@Catalogos.TextoEstado(e)</option>
+                                                }
+                                            </select>
+                                            <button type="submit" class="btn sm">Cambiar</button>
+                                        </form>
+                                    }
+                                </div></td>
+                            }
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </section>
+}

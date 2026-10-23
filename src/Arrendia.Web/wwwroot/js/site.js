@@ -81,6 +81,40 @@
     }
   });
 
+  document.querySelectorAll("select[data-depende-de]").forEach(function (lista) {
+    var origen = document.getElementById(lista.getAttribute("data-depende-de"));
+    if (!origen) return;
+    function filtrar() {
+      var actual = lista.selectedOptions[0];
+      var nombre = actual ? actual.value : "";
+      var visible = null;
+      lista.querySelectorAll("optgroup").forEach(function (grupo) {
+        var ok = grupo.label === origen.value;
+        grupo.hidden = !ok;
+        grupo.disabled = !ok;
+        if (ok) visible = grupo;
+      });
+      if (!visible || (actual && actual.parentElement === visible)) return;
+      var opciones = Array.prototype.slice.call(visible.querySelectorAll("option"));
+      var igual = opciones.filter(function (o) { return o.value === nombre; })[0];
+      var elegida = igual || opciones.filter(function (o) { return o.value === origen.value; })[0] || opciones[0];
+      if (elegida) elegida.selected = true;
+    }
+    origen.addEventListener("change", filtrar);
+    filtrar();
+  });
+
+  document.querySelectorAll("[data-mostrar-si]").forEach(function (bloque) {
+    var nombre = bloque.getAttribute("data-mostrar-si");
+    var radios = document.querySelectorAll("input[type=radio][name='" + nombre + "']");
+    function actualizar() {
+      var marcado = document.querySelector("input[type=radio][name='" + nombre + "']:checked");
+      bloque.hidden = !marcado || marcado.value !== "true";
+    }
+    radios.forEach(function (r) { r.addEventListener("change", actualizar); });
+    actualizar();
+  });
+
   var plano = document.querySelector("[data-plano]");
   if (plano) {
     var tipos = ["o", "o", "o", "o", "o", "o", "d", "d", "m", ""];

@@ -2,6 +2,8 @@
 
 Este archivo explica a cualquier asistente de IA (y a cualquier persona nueva) qué es Arrendia, cómo está construido y qué reglas no se pueden romper. Léelo completo antes de proponer o escribir código.
 
+El estado del proyecto y lo que falta está en [`TAREAS.md`](TAREAS.md): revísalo antes de empezar y marca lo que termines.
+
 ## Qué es Arrendia
 
 Sistema web para administrar arrendamientos de plazas comerciales y edificios de apartamentos en El Salvador. Proyecto estudiantil de Programación II (Universidad Doctor Andrés Bello, Regional Sonsonate, Grupo 1).
@@ -52,7 +54,7 @@ src/Arrendia.Web       Proyecto único ASP.NET Core MVC:
   Services/            Reglas simples y servicios (PDF, correo, pagos en línea, Cloudinary)
   Data/                Código C# que llama procedimientos almacenados y vistas por su nombre
 tests/Arrendia.Tests   Pruebas
-seed/seed.sql          Datos iniciales; se ejecuta manualmente
+seed/seed.sql          Datos iniciales; cada despliegue a QA y producción inserta los que falten
 deploy/                Dockerfile y required-db-objects.txt
 db-local/              Respaldos .bak locales (ignorado por Git)
 compose.yaml           SQL Server + web en local, con volumen persistente (SQL en localhost,14333)
