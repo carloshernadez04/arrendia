@@ -17,8 +17,8 @@ public class ReglasPagoTests
 
     [Theory]
     [InlineData(null)]
-    [InlineData(0)]
-    [InlineData(-10)]
+    [InlineData(0.0)]
+    [InlineData(-10.0)]
     public void ElMontoDebeSerMayorACero(double? monto)
     {
         var error = ReglasPago.ValidarMonto(monto is null ? null : (decimal)monto, 500m);
