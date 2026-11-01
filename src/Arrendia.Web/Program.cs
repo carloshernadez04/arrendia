@@ -34,6 +34,7 @@ builder.Services.AddScoped<IRepositorioContratos, RepositorioContratos>();
 builder.Services.AddScoped<IRepositorioCobros, RepositorioCobros>();
 builder.Services.AddScoped<IRepositorioMantenimiento, RepositorioMantenimiento>();
 builder.Services.AddScoped<IRepositorioPortal, RepositorioPortal>();
+builder.Services.AddScoped<IRepositorioConsultas, RepositorioConsultas>();
 builder.Services.AddScoped<ProcesadorAvisos>();
 builder.Services.Configure<OpcionesWompi>(builder.Configuration.GetSection(OpcionesWompi.Seccion));
 if (builder.Configuration.GetSection(OpcionesWompi.Seccion).Get<OpcionesWompi>()?.EstaConfigurado == true)
