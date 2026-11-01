@@ -292,14 +292,21 @@ public sealed class RepositorioUsuarios(IBaseDatos baseDatos) : IRepositorioUsua
     public async Task<(int UsuarioId, string Nombre, string EmailNuevo)?> CambioCorreoPendienteAsync(byte[] tokenHash, CancellationToken cancelacion)
     {
         await using var conexion = await baseDatos.AbrirAsync(cancelacion);
-        var fila = await conexion.QuerySingleOrDefaultAsync<(int, string, string)?>(new CommandDefinition(
+        var fila = await conexion.QuerySingleOrDefaultAsync<CambioPendienteFila>(new CommandDefinition(
             """
             SELECT u.ID, u.NOMBRE, t.EMAIL_NUEVO
             FROM dbo.TOKEN_USUARIO t JOIN dbo.USUARIO u ON u.ID = t.USUARIO_ID
             WHERE t.TOKEN_HASH = @Hash AND t.TIPO = 'CambioCorreo' AND t.USADO_EN IS NULL AND t.EXPIRA > SYSUTCDATETIME()
             """,
             new { Hash = tokenHash }, cancellationToken: cancelacion));
-        return fila;
+        return fila is null ? null : (fila.Id, fila.Nombre, fila.EmailNuevo);
+    }
+
+    private sealed class CambioPendienteFila
+    {
+        public int Id { get; set; }
+        public string Nombre { get; set; } = "";
+        public string EmailNuevo { get; set; } = "";
     }
 
     public async Task ConfirmarCambioCorreoAsync(byte[] tokenHash, CancellationToken cancelacion)

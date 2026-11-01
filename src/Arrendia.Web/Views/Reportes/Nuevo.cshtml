@@ -1,0 +1,48 @@
+@model ReporteFormulario
+@{
+    ViewData["Title"] = "Nuevo reporte";
+}
+<div class="ph"><div><h2>Nuevo reporte</h2><p class="muted">Para un problema en una unidad o en un área común.</p></div></div>
+<form method="post" enctype="multipart/form-data" class="card formulario" novalidate data-formulario>
+    <div asp-validation-summary="All" class="aviso error"></div>
+    <div class="campos">
+        <div class="fld ancho">
+            <label for="Lugar">¿Dónde está el problema?</label>
+            <select id="Lugar" name="Lugar" class="sel">
+                <option value="">Elige la unidad o el área común</option>
+                @foreach (var p in Model.Propiedades)
+                {
+                    <optgroup label="@p.Nombre">
+                        <option value="p:@p.Id" selected="@(Model.Lugar == $"p:{p.Id}")">Área común de @p.Nombre</option>
+                        @foreach (var u in Model.Unidades.Where(u => u.PropiedadId == p.Id))
+                        {
+                            <option value="u:@u.Id" selected="@(Model.Lugar == $"u:{u.Id}")">@u.Codigo@(u.Inquilino is null ? "" : $" · {u.Inquilino}")</option>
+                        }
+                    </optgroup>
+                }
+            </select>
+        </div>
+        <div class="fld ancho">
+            <label asp-for="AreaComun">Área común (si aplica)</label>
+            <input asp-for="AreaComun" class="inp" placeholder="Ej. Parqueo, pasillo del segundo nivel, cisterna" />
+        </div>
+        <div class="fld">
+            <label asp-for="CategoriaId">Categoría</label>
+            <select asp-for="CategoriaId" class="sel" asp-items="@(new SelectList(Model.Categorias, "Id", "Nombre"))"><option value="">Elige la categoría</option></select>
+        </div>
+        <div class="fld">
+            <label asp-for="Prioridad">Prioridad</label>
+            <select asp-for="Prioridad" class="sel">@foreach (var p in Prioridades.Todas) { <option value="@p">@p</option> }</select>
+        </div>
+        <div class="fld ancho"><label asp-for="Titulo">Título</label><input asp-for="Titulo" class="inp" maxlength="120" placeholder="Ej. Fuga en el baño" /></div>
+        <div class="fld ancho"><label asp-for="Descripcion">Descripción</label><textarea asp-for="Descripcion" class="txa" rows="4" maxlength="2000"></textarea></div>
+        <div class="fld ancho">
+            <label for="Fotos">Fotos (opcional, hasta 6)</label>
+            <input id="Fotos" name="Fotos" type="file" accept="image/jpeg,image/png,image/webp" multiple class="inp" />
+        </div>
+    </div>
+    <div class="pie">
+        <a class="btn" asp-action="Index">Cancelar</a>
+        <button type="submit" class="btn pri">Crear reporte</button>
+    </div>
+</form>

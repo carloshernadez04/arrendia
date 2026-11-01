@@ -1,0 +1,28 @@
+@model TecnicoFormulario
+@{
+    ViewData["Title"] = Model.Id is null ? "Nuevo técnico" : "Editar técnico";
+}
+<div class="ph"><div><h2>@ViewData["Title"]</h2><p class="muted">Solo se le asignan reportes de sus especialidades.</p></div></div>
+<form method="post" asp-action="Guardar" class="card formulario" novalidate data-formulario>
+    <div asp-validation-summary="All" class="aviso error"></div>
+    <input type="hidden" asp-for="Id" />
+    <div class="campos">
+        <div class="fld ancho"><label asp-for="Nombre">Nombre</label><input asp-for="Nombre" class="inp" /></div>
+        <div class="fld"><label asp-for="Telefono">Teléfono</label><input asp-for="Telefono" class="inp mono" placeholder="7777-7777" inputmode="tel" /></div>
+        <div class="fld"><label asp-for="Email">Correo (opcional)</label><input asp-for="Email" type="email" class="inp" /><span class="hint">Si no tiene, le envías el enlace por WhatsApp.</span></div>
+        <fieldset class="fld ancho">
+            <legend class="etiqueta">Especialidades</legend>
+            <div class="checks">
+                @foreach (var e in Model.Opciones)
+                {
+                    <label class="chk"><input type="checkbox" name="Especialidades" value="@e.Id" checked="@Model.Especialidades.Contains(e.Id)" /> <span>@e.Nombre</span></label>
+                }
+            </div>
+        </fieldset>
+        <div class="fld ancho"><label class="chk"><input asp-for="Activo" /> <span>Activo (se le pueden asignar trabajos)</span></label></div>
+    </div>
+    <div class="pie">
+        <a class="btn" asp-action="Index">Cancelar</a>
+        <button type="submit" class="btn pri">Guardar</button>
+    </div>
+</form>
