@@ -29,7 +29,7 @@ Estado del proyecto. Marca `[x]` cuando una tarea quede terminada y desplegada e
 - [x] SQL Server en el servidor con bases `ArrendiaQA` y `ArrendiaProd` y usuarios separados
 - [x] Respaldo diario automático y prueba semanal de restauración
 - [x] Dominios de QA y producción por Cloudflare Tunnel
-- [ ] Corregir el paso que bloquea llaves de producción de Wompi en QA (formato de El Salvador)
+- [x] Corregir el paso que bloquea llaves de producción de Wompi en QA (ahora revisa `Wompi__PermitirProductivo`)
 - [ ] Cargar las llaves de SMTP, Wompi y Cloudinary en el `DOTENV` de cada ambiente
 - [ ] Verificar el dominio en el proveedor SMTP (registros SPF y DKIM en Cloudflare)
 - [ ] Borrar los registros DNS basura en horasvoluntariado.site
@@ -53,32 +53,34 @@ Estado del proyecto. Marca `[x]` cuando una tarea quede terminada y desplegada e
 - [x] Activar invitación, recuperar y restablecer contraseña
 - [x] Comando `activar-admin` para el primer administrador
 - [x] `/health` con revisión de la base y claves de sesión persistentes
-- [ ] Servicio en segundo plano que ejecuta `SP_EJECUTAR_PROCESOS_DIARIOS` cada hora
-- [ ] Envío de la cola de correos (aviso de cobro y comprobante)
-- [ ] Subida de archivos a Cloudinary con URL firmada
-- [ ] Generación de PDF con QuestPDF y código QR con QRCoder
+- [x] Servicio en segundo plano que ejecuta `SP_EJECUTAR_PROCESOS_DIARIOS` cada hora
+- [x] Envío de la cola de correos (aviso de cobro y comprobante con su PDF adjunto)
+- [x] Archivos en Cloudinary privado (o carpeta local sin llaves), servidos solo con permiso
+- [x] Generación de PDF con QuestPDF y código QR con QRCoder, con verificación pública
+- [x] Exportación de informes a Excel con ClosedXML
 
 ## Aplicación: módulos
 
-- [ ] Mi cuenta: nombre, contraseña, correo de acceso con confirmación, tema y cerrar sesión en todos los dispositivos
-- [ ] Usuarios y permisos: invitar supervisores, propiedades asignadas, permisos e invitaciones pendientes
-- [ ] Configuración: plantilla de condiciones, conceptos de cobro, catálogos, feriados y parámetros
+- [x] Mi cuenta: nombre, contraseña, correo de acceso con confirmación, tema y cerrar sesión en todos los dispositivos
+- [x] Usuarios y permisos: invitar supervisores, propiedades asignadas, permisos e invitaciones pendientes
+- [x] Configuración: plantilla de condiciones, conceptos de cobro, catálogos, feriados y parámetros
 - [x] Propiedades y unidades, con plano de unidades y ubicación en Maps
-- [ ] Inquilinos y contactos, con acceso al portal
-- [ ] Contratos: asistente, PDF para firmar, activación con el escaneado y cambio de condiciones
-- [ ] Cargos: cargos manuales, condonación y anulación
-- [ ] Pagos en efectivo y transferencia, con comprobante en PDF que indique el método
-- [ ] Pago en línea con Wompi: intención de pago, enlace y webhook con firma validada
-- [ ] Cobranza por días de atraso
-- [ ] Reportes de mantenimiento y técnicos: asignación por especialidad y enlace con PIN
-- [ ] Portal del inquilino: estado de cuenta, pagar, documentos y reportes
-- [ ] Tablero con indicadores
-- [ ] Informes exportables a PDF y Excel
-- [ ] Documentos y verificación por QR
-- [ ] Correos enviados y bitácora
+- [x] Inquilinos y contactos, con acceso al portal
+- [x] Contratos: asistente, PDF para firmar, activación con el escaneado y cambio de condiciones
+- [x] Cargos: cargos manuales, condonación y anulación
+- [x] Pagos en efectivo y transferencia, con comprobante en PDF que indica el método
+- [x] Pago en línea con Wompi: intención de pago, enlace y webhook con firma validada (simulador en desarrollo)
+- [x] Cobranza por días de atraso
+- [x] Reportes de mantenimiento y técnicos: asignación por especialidad y enlace con PIN
+- [x] Portal del inquilino: estado de cuenta, pagar, documentos y reportes
+- [x] Tablero con indicadores
+- [x] Informes exportables a PDF y Excel
+- [x] Documentos y verificación por QR
+- [x] Correos enviados y bitácora
 
 ## Calidad antes de producción
 
-- [ ] Pruebas de pagos en el CI (monto mayor a cero, sin pagar de más, pagos parciales)
+- [x] Pruebas de pagos en el CI (monto mayor a cero, sin pagar de más, pagos parciales) y de la firma de Wompi
+- [x] Prueba de punta a punta de todos los módulos contra la base local (63 verificaciones)
 - [ ] Pago de prueba de punta a punta en QA con la tarjeta de prueba de Wompi
 - [ ] Revisión final de seguridad antes de pasar cada módulo a producción
