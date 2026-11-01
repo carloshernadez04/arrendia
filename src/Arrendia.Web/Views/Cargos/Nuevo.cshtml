@@ -1,0 +1,57 @@
+@model CargoFormulario
+@{
+    ViewData["Title"] = "Cargo manual";
+}
+<div class="ph">
+    <div>
+        <h2>Cargo manual</h2>
+        <p class="muted">Reparaciones, servicios y otros cobros fuera de la renta. La renta y la mora las genera el sistema.</p>
+    </div>
+</div>
+<form method="post" enctype="multipart/form-data" class="card formulario" novalidate data-formulario>
+    <div asp-validation-summary="All" class="aviso error"></div>
+    <div class="campos">
+        <div class="fld ancho">
+            <label asp-for="ContratoId">Contrato</label>
+            <select asp-for="ContratoId" class="sel" asp-items="@(new SelectList(Model.Contratos, "Id", "Nombre"))">
+                <option value="">Elige un contrato activo</option>
+            </select>
+        </div>
+        <div class="fld">
+            <label asp-for="ConceptoCodigo">Concepto</label>
+            <select asp-for="ConceptoCodigo" class="sel">
+                @foreach (var c in Model.Conceptos)
+                {
+                    <option value="@c.Codigo" selected="@(c.Codigo == Model.ConceptoCodigo)">@c.Nombre (IVA: @Estados.Texto(c.AplicaIva).ToLowerInvariant())</option>
+                }
+            </select>
+        </div>
+        <div class="fld">
+            <label asp-for="MontoBase">Monto (sin IVA)</label>
+            <div class="pre"><span>$</span><input asp-for="MontoBase" type="number" step="0.01" min="0.01" class="inp num" inputmode="decimal" /></div>
+            <span class="hint">El IVA se calcula según el concepto y la unidad.</span>
+        </div>
+        <div class="fld ancho">
+            <label asp-for="Descripcion">Descripción</label>
+            <input asp-for="Descripcion" class="inp" maxlength="200" placeholder="Ej. Cambio de chapa de la puerta principal" />
+            <span class="hint">Así aparece en el aviso de cobro y en el estado de cuenta.</span>
+        </div>
+        <div class="fld">
+            <label asp-for="FechaVencimiento">Vence</label>
+            <input asp-for="FechaVencimiento" type="date" class="inp" />
+        </div>
+        <div class="fld">
+            <label asp-for="GeneraMora">Genera mora si se atrasa</label>
+            <select asp-for="GeneraMora" class="sel"><option value="">Según el concepto</option><option value="si">Sí</option><option value="no">No</option></select>
+        </div>
+        <div class="fld ancho">
+            <label asp-for="Respaldo">Respaldo (opcional)</label>
+            <input asp-for="Respaldo" type="file" accept="image/jpeg,image/png,image/webp,application/pdf" class="inp" />
+            <span class="hint">Factura o foto que justifica el cobro. Máximo 10 MB.</span>
+        </div>
+    </div>
+    <div class="pie">
+        <a class="btn" asp-action="Index">Cancelar</a>
+        <button type="submit" class="btn pri">Crear cargo</button>
+    </div>
+</form>

@@ -1,0 +1,52 @@
+@model PagoDetalleModelo
+@{
+    var g = Model.Pago;
+    ViewData["Title"] = g.Numero;
+}
+<partial name="_Avisos" />
+<div class="ph">
+    <div>
+        <h2><span class="mono">@g.Numero</span> <span class="chip @Estados.Clase(g.Estado)">@g.Estado</span></h2>
+        <p class="muted"><a class="mono" href="/contratos/@g.ContratoId">@g.Contrato</a> · @g.Inquilino · @g.Unidad, @g.Propiedad</p>
+    </div>
+    <div class="row">
+        <a class="btn" asp-action="Index">@Iconos.Svg("chevL", "s")Pagos</a>
+        <a class="btn pri" asp-action="Comprobante" asp-route-id="@g.Id">@Iconos.Svg("file", "s")Comprobante</a>
+    </div>
+</div>
+<div class="grid">
+    <section class="card c8">
+        <div class="hd"><h3>Detalle</h3></div>
+        <div class="bd">
+            <dl class="kv">
+                <dt>Monto</dt><dd class="num"><b>@Formato.Dinero(g.Monto)</b></dd>
+                <dt>Fecha</dt><dd>@Formato.FechaHora(g.FechaPago)</dd>
+                <dt>Método</dt><dd>@g.Metodo</dd>
+                <dt>Referencia</dt><dd class="mono">@(g.Referencia ?? "—")</dd>
+                <dt>Registró</dt><dd>@g.Registro</dd>
+                @if (g.FolioComprobante is not null) { <dt>Comprobante</dt><dd class="mono">@g.FolioComprobante</dd> }
+                @if (g.ArchivoComprobanteId is not null) { <dt>Foto de la transferencia</dt><dd><a href="/archivos/@g.ArchivoComprobanteId" target="_blank" rel="noopener">Ver archivo</a></dd> }
+                @if (g.Estado == "Anulado") { <dt>Anulado</dt><dd>@Formato.FechaHora(g.FechaAnulacion) · @g.MotivoAnulacion</dd> }
+            </dl>
+        </div>
+    </section>
+    <section class="card c4">
+        <div class="hd"><h3>Cómo se aplicó</h3></div>
+        <ul class="lista">
+            @foreach (var a in Model.Aplicaciones)
+            {
+                <li class="@(a.Revertida ? "apagada" : "")"><span><a href="/cargos/@a.CargoId">@a.Descripcion</a></span><b class="num">@Formato.Dinero(a.MontoAplicado)</b></li>
+            }
+        </ul>
+    </section>
+</div>
+@if (Model.Permisos.EsAdministrador && g.Estado == "Aplicado")
+{
+    <section class="card espacio peligro">
+        <div class="hd"><h3>Anular pago</h3><span class="muted">Solo si se registró por error. El saldo vuelve a los cargos.</span></div>
+        <form method="post" asp-action="Anular" asp-route-id="@g.Id" class="bd linea-form" data-formulario>
+            <input name="motivo" class="inp" placeholder="Motivo de la anulación" aria-label="Motivo" maxlength="500" required />
+            <button type="submit" class="btn">Anular pago</button>
+        </form>
+    </section>
+}

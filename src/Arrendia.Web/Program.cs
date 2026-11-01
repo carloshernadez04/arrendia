@@ -31,6 +31,7 @@ builder.Services.AddScoped<IRepositorioUsuarios, RepositorioUsuarios>();
 builder.Services.AddScoped<IRepositorioInquilinos, RepositorioInquilinos>();
 builder.Services.AddScoped<IRepositorioConfiguracion, RepositorioConfiguracion>();
 builder.Services.AddScoped<IRepositorioContratos, RepositorioContratos>();
+builder.Services.AddScoped<IRepositorioCobros, RepositorioCobros>();
 builder.Services.AddScoped<ServicioDocumentos>();
 builder.Services.AddScoped<EnvioInmediato>();
 builder.Services.AddScoped<ServicioInvitaciones>();
