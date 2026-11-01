@@ -1,0 +1,221 @@
+@model ConfiguracionModelo
+@using Arrendia.Web.Controllers
+@{
+    ViewData["Title"] = "Configuración";
+}
+<partial name="_Avisos" />
+<div class="ph">
+    <div>
+        <h2>Configuración</h2>
+        <p class="muted">Valores que usa el sistema al crear contratos, cargos y reportes.</p>
+    </div>
+</div>
+<nav class="tabs" aria-label="Secciones">
+    @foreach (var (clave, texto) in ConfiguracionController.Secciones)
+    {
+        <a href="?seccion=@clave" aria-current="@(clave == Model.Seccion ? "page" : null)">@texto</a>
+    }
+</nav>
+@switch (Model.Seccion)
+{
+    case "plantillas":
+        <div class="row sp espacio-abajo">
+            <p class="muted">Cada contrato nuevo copia una plantilla. Cambiarla no afecta a los contratos que ya existen.</p>
+            <a class="btn pri" asp-action="NuevaPlantilla">@Iconos.Svg("plus", "s")Nueva plantilla</a>
+        </div>
+        <section class="card">
+            <div class="tw">
+                <table class="tbl">
+                    <thead><tr><th>Plantilla</th><th class="r">Día de pago</th><th class="r">Gracia</th><th class="r">Mora diaria</th><th>Pagos parciales</th><th>Estado</th><th></th></tr></thead>
+                    <tbody>
+                        @foreach (var p in Model.Plantillas)
+                        {
+                            <tr class="@(p.Activo ? "" : "apagada")">
+                                <td data-l="Plantilla"><b>@p.Nombre</b> @if (p.EsPredeterminada) { <span class="chip info">Predeterminada</span> }</td>
+                                <td data-l="Día de pago" class="r num">@p.DiaPago</td>
+                                <td data-l="Gracia" class="r num">@p.DiasGracia días</td>
+                                <td data-l="Mora" class="r num">@(p.AplicaMora ? Formato.Porcentaje(p.PorcentajeMoraDiario) : "Sin mora")</td>
+                                <td data-l="Parciales">@(p.PermitePagosParciales ? "Sí" : "No")</td>
+                                <td data-l="Estado"><span class="chip @(p.Activo ? "ok" : "")">@(p.Activo ? "Activa" : "Inactiva")</span></td>
+                                <td>
+                                    <div class="acciones">
+                                        <a class="btn sm" asp-action="EditarPlantilla" asp-route-id="@p.Id">Editar</a>
+                                        @if (!p.EsPredeterminada)
+                                        {
+                                            <form method="post" asp-action="Predeterminada" asp-route-id="@p.Id"><button type="submit" class="btn sm">Hacer predeterminada</button></form>
+                                        }
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </section>
+        break;
+    case "conceptos":
+        <p class="muted espacio-abajo">La renta y la mora son del sistema: los genera el proceso diario y no se editan. Los demás se usan en los cargos manuales.</p>
+        <section class="card">
+            <div class="tw">
+                <table class="tbl">
+                    <thead><tr><th>Código</th><th>Nombre</th><th>IVA</th><th>Genera mora</th><th>Estado</th><th></th></tr></thead>
+                    <tbody>
+                        @foreach (var c in Model.Conceptos)
+                        {
+                            <tr class="@(c.Activo ? "" : "apagada")">
+                                <td data-l="Código" class="mono">@c.Codigo</td>
+                                <td data-l="Nombre">@c.Nombre @if (c.EsSistema) { <span class="chip">Sistema</span> }</td>
+                                <td data-l="IVA">@Estados.Texto(c.AplicaIva)</td>
+                                <td data-l="Mora">@(c.GeneraMoraPorDefecto ? "Sí" : "No")</td>
+                                <td data-l="Estado"><span class="chip @(c.Activo ? "ok" : "")">@(c.Activo ? "Activo" : "Inactivo")</span></td>
+                                <td>
+                                    @if (!c.EsSistema)
+                                    {
+                                        <details class="accion">
+                                            <summary class="btn sm">Editar</summary>
+                                            <form method="post" asp-action="Concepto" class="emergente col" data-formulario>
+                                                <input type="hidden" name="Id" value="@c.Id" />
+                                                <input type="hidden" name="Codigo" value="@c.Codigo" />
+                                                <input name="Nombre" class="inp" value="@c.Nombre" aria-label="Nombre" required />
+                                                <select name="AplicaIva" class="sel" aria-label="IVA">
+                                                    @foreach (var iva in new[] { "Si", "No", "SegunUnidad" }) { <option value="@iva" selected="@(iva == c.AplicaIva)">IVA: @Estados.Texto(iva)</option> }
+                                                </select>
+                                                <label class="chk"><input type="checkbox" name="GeneraMoraPorDefecto" value="true" checked="@c.GeneraMoraPorDefecto" /><input type="hidden" name="GeneraMoraPorDefecto" value="false" /> <span>Genera mora</span></label>
+                                                <label class="chk"><input type="checkbox" name="Activo" value="true" checked="@c.Activo" /><input type="hidden" name="Activo" value="false" /> <span>Activo</span></label>
+                                                <button type="submit" class="btn pri sm">Guardar</button>
+                                            </form>
+                                        </details>
+                                    }
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+            <form method="post" asp-action="Concepto" class="linea-form" data-formulario>
+                <input type="hidden" name="Id" value="0" />
+                <input name="Codigo" class="inp mono" placeholder="CÓDIGO" aria-label="Código" maxlength="20" required />
+                <input name="Nombre" class="inp" placeholder="Nombre del concepto" aria-label="Nombre" maxlength="60" required />
+                <select name="AplicaIva" class="sel" aria-label="IVA">
+                    <option value="Si">IVA: Sí</option><option value="No">IVA: No</option><option value="SegunUnidad">IVA: según la unidad</option>
+                </select>
+                <input type="hidden" name="GeneraMoraPorDefecto" value="false" />
+                <input type="hidden" name="Activo" value="true" />
+                <button type="submit" class="btn">@Iconos.Svg("plus", "s")Agregar concepto</button>
+            </form>
+        </section>
+        break;
+    case "catalogos":
+        <div class="grid">
+            @foreach (var (tabla, titulo, filas) in new[] { ("TIPO_UNIDAD", "Tipos de unidad", Model.TiposUnidad), ("ESPECIALIDAD", "Especialidades de técnicos", Model.Especialidades) })
+            {
+                <section class="card c6">
+                    <div class="hd"><h3>@titulo</h3></div>
+                    <ul class="lista">
+                        @foreach (var e in filas)
+                        {
+                            <li class="@(e.Activo ? "" : "apagada")">
+                                <form method="post" asp-action="Catalogo" asp-route-tabla="@tabla" class="row" data-formulario>
+                                    <input type="hidden" name="Id" value="@e.Id" />
+                                    <input name="Nombre" class="inp" value="@e.Nombre" aria-label="Nombre" required />
+                                    <label class="chk"><input type="checkbox" name="Activo" value="true" checked="@e.Activo" /><input type="hidden" name="Activo" value="false" /> <span>Activo</span></label>
+                                    <button type="submit" class="btn sm">Guardar</button>
+                                </form>
+                                <small class="muted">@e.Usos en uso</small>
+                            </li>
+                        }
+                    </ul>
+                    <form method="post" asp-action="Catalogo" asp-route-tabla="@tabla" class="linea-form" data-formulario>
+                        <input type="hidden" name="Id" value="0" />
+                        <input name="Nombre" class="inp" placeholder="Nuevo" aria-label="Nombre" required />
+                        <button type="submit" class="btn">@Iconos.Svg("plus", "s")Agregar</button>
+                    </form>
+                </section>
+            }
+        </div>
+        <section class="card espacio">
+            <div class="hd"><h3>Categorías de reporte</h3><span class="muted">La especialidad decide qué técnicos se pueden asignar</span></div>
+            <div class="tw">
+                <table class="tbl">
+                    <thead><tr><th>Categoría</th><th>Especialidad</th><th class="r">Horas para atender</th><th>Activa</th><th></th></tr></thead>
+                    <tbody>
+                        @foreach (var c in Model.Categorias)
+                        {
+                            <tr class="@(c.Activo ? "" : "apagada")">
+                                <td colspan="5">
+                                    <form method="post" asp-action="Catalogo" asp-route-tabla="CATEGORIA_REPORTE" class="fila-form" data-formulario>
+                                        <input type="hidden" name="Id" value="@c.Id" />
+                                        <input name="Nombre" class="inp" value="@c.Nombre" aria-label="Categoría" required />
+                                        <select name="EspecialidadId" class="sel" aria-label="Especialidad">
+                                            <option value="">Cualquier técnico</option>
+                                            @foreach (var e in Model.Especialidades.Where(x => x.Activo || x.Id == c.EspecialidadId)) { <option value="@e.Id" selected="@(e.Id == c.EspecialidadId)">@e.Nombre</option> }
+                                        </select>
+                                        <input name="HorasAtencion" type="number" min="1" max="2000" class="inp num" value="@c.HorasAtencion" aria-label="Horas" />
+                                        <label class="chk"><input type="checkbox" name="Activo" value="true" checked="@c.Activo" /><input type="hidden" name="Activo" value="false" /> <span>Activa</span></label>
+                                        <button type="submit" class="btn sm">Guardar</button>
+                                    </form>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+            <form method="post" asp-action="Catalogo" asp-route-tabla="CATEGORIA_REPORTE" class="linea-form" data-formulario>
+                <input type="hidden" name="Id" value="0" />
+                <input name="Nombre" class="inp" placeholder="Nueva categoría" aria-label="Categoría" required />
+                <select name="EspecialidadId" class="sel" aria-label="Especialidad">
+                    <option value="">Cualquier técnico</option>
+                    @foreach (var e in Model.Especialidades.Where(x => x.Activo)) { <option value="@e.Id">@e.Nombre</option> }
+                </select>
+                <input name="HorasAtencion" type="number" min="1" max="2000" class="inp num" value="72" aria-label="Horas" />
+                <button type="submit" class="btn">@Iconos.Svg("plus", "s")Agregar</button>
+            </form>
+        </section>
+        break;
+    case "feriados":
+        <p class="muted espacio-abajo">Si un vencimiento cae en domingo o en un feriado, pasa al siguiente día hábil (cuando la condición del contrato lo indica).</p>
+        <section class="card">
+            <ul class="lista">
+                @foreach (var f in Model.Feriados)
+                {
+                    <li>
+                        <span><b>@Formato.Fecha(f.Fecha)</b> · @f.Nombre</span>
+                        <form method="post" asp-action="QuitarFeriado" asp-route-id="@f.Id"><button type="submit" class="btn sm">Quitar</button></form>
+                    </li>
+                }
+            </ul>
+            <form method="post" asp-action="Feriado" class="linea-form" data-formulario>
+                <input name="fecha" type="date" class="inp" aria-label="Fecha" required />
+                <input name="nombre" class="inp" placeholder="Nombre del feriado" aria-label="Nombre" maxlength="80" required />
+                <button type="submit" class="btn">@Iconos.Svg("plus", "s")Agregar feriado</button>
+            </form>
+        </section>
+        break;
+    default:
+        <section class="card">
+            <ul class="lista">
+                @foreach (var p in Model.Parametros)
+                {
+                    <li>
+                        <div class="col">
+                            <b class="mono">@p.Clave</b>
+                            <small class="muted">@p.Descripcion</small>
+                        </div>
+                        <form method="post" asp-action="Parametro" class="row" data-formulario>
+                            <input type="hidden" name="clave" value="@p.Clave" />
+                            @if (p.Tipo == "Bool")
+                            {
+                                <select name="valor" class="sel" aria-label="@p.Clave"><option value="true" selected="@(p.Valor == "true")">Sí</option><option value="false" selected="@(p.Valor != "true")">No</option></select>
+                            }
+                            else
+                            {
+                                <input name="valor" class="inp @(p.Tipo == "Numero" ? "num" : "")" value="@p.Valor" aria-label="@p.Clave" inputmode="@(p.Tipo == "Numero" ? "decimal" : "text")" required />
+                            }
+                            <button type="submit" class="btn sm">Guardar</button>
+                        </form>
+                    </li>
+                }
+            </ul>
+        </section>
+        break;
+}

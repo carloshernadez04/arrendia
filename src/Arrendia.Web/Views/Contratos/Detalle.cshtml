@@ -1,0 +1,220 @@
+@model ContratoDetalleModelo
+@{
+    var c = Model.Contrato;
+    var p = Model.Permisos;
+    var v = Model.Vigente;
+    ViewData["Title"] = c.Numero;
+    var enTramite = c.Estado is "Borrador" or "PendienteFirma";
+    var hoy = Formato.HoySv();
+    var documentoContrato = Model.Documentos.FirstOrDefault(d => d.Id == c.DocumentoContratoId);
+}
+<partial name="_Avisos" />
+<div class="ph">
+    <div>
+        <h2><span class="mono">@c.Numero</span> <span class="chip @Estados.Clase(c.Estado)">@Estados.Texto(c.Estado)</span></h2>
+        <p class="muted"><a href="/inquilinos/@c.InquilinoId">@c.Inquilino</a> · @c.Unidad, <a href="/propiedades/@c.PropiedadId">@c.Propiedad</a></p>
+    </div>
+    <div class="row">
+        <a class="btn" asp-action="Index">@Iconos.Svg("chevL", "s")Volver</a>
+        <a class="btn" asp-action="EstadoCuenta" asp-route-id="@c.Id">@Iconos.Svg("receipt", "s")Estado de cuenta</a>
+        @if (c.Estado == "Activo" && p.RegistrarPagos)
+        {
+            <a class="btn pri" href="/pagos/nuevo?contrato=@c.Id">@Iconos.Svg("coin", "s")Registrar pago</a>
+        }
+    </div>
+</div>
+@if (enTramite)
+{
+    <section class="card pasos">
+        <div class="paso @(c.DocumentoContratoId is null ? "actual" : "hecho")">
+            <span class="num-paso">1</span>
+            <div class="col">
+                <b>Genera el contrato en PDF</b>
+                <span class="muted">Se imprime y lo firman las dos partes.</span>
+                <div class="row">
+                    @if (p.CrearContratos)
+                    {
+                        <form method="post" asp-action="Generar" asp-route-id="@c.Id" data-formulario><button type="submit" class="btn @(c.DocumentoContratoId is null ? "pri" : "")">@(c.DocumentoContratoId is null ? "Generar PDF" : "Generar de nuevo")</button></form>
+                    }
+                    @if (documentoContrato is not null)
+                    {
+                        <a class="btn" href="/documentos/@documentoContrato.Id/pdf">@Iconos.Svg("file", "s")Descargar @documentoContrato.Folio</a>
+                    }
+                </div>
+            </div>
+        </div>
+        <div class="paso @(c.DocumentoContratoId is null ? "" : "actual")">
+            <span class="num-paso">2</span>
+            <div class="col">
+                <b>Sube el contrato firmado y actívalo</b>
+                <span class="muted">Foto o PDF del contrato con las dos firmas. Al activarlo la unidad queda ocupada y empiezan los cobros.</span>
+                @if (p.ActivarContratos)
+                {
+                    <form method="post" asp-action="Activar" asp-route-id="@c.Id" enctype="multipart/form-data" class="row" data-formulario>
+                        <input type="file" name="firmado" accept="image/jpeg,image/png,image/webp,application/pdf" class="inp" required aria-label="Contrato firmado" />
+                        <button type="submit" class="btn pri">Activar contrato</button>
+                    </form>
+                }
+            </div>
+        </div>
+    </section>
+}
+<div class="grid espacio">
+    <section class="card c8">
+        <div class="hd"><h3>Resumen</h3></div>
+        <div class="bd">
+            <dl class="kv">
+                <dt>Vigencia</dt><dd>@Formato.Fecha(c.FechaInicio) al @Formato.Fecha(c.FechaFin)</dd>
+                <dt>Renta vigente</dt><dd class="num">@Formato.Dinero(v?.Renta)@(c.AplicaIva ? " + IVA" : "")</dd>
+                <dt>Día de pago</dt><dd>@v?.DiaPago de cada mes</dd>
+                <dt>Mora</dt><dd>@(v is { AplicaMora: true } ? $"{Formato.Porcentaje(v.PorcentajeMoraDiario)} diario después de {v.DiasGracia} días de gracia" : "No aplica")</dd>
+                <dt>Pagos parciales</dt><dd>@(v?.PermitePagosParciales == true ? "Permitidos" : "No permitidos")</dd>
+                <dt>Depósito</dt><dd class="num">@Formato.Dinero(c.MontoDeposito)</dd>
+                @if (c.FechaActivacion is not null) { <dt>Activado</dt><dd>@Formato.FechaHora(c.FechaActivacion)</dd> }
+                @if (c.ArchivoFirmadoId is not null) { <dt>Contrato firmado</dt><dd><a href="/archivos/@c.ArchivoFirmadoId" target="_blank" rel="noopener">Ver escaneado</a></dd> }
+                @if (c.FechaTerminacion is not null) { <dt>Terminación</dt><dd>@Formato.Fecha(c.FechaTerminacion)</dd> }
+                @if (c.MotivoTerminacion is not null) { <dt>Motivo</dt><dd>@c.MotivoTerminacion</dd> }
+            </dl>
+        </div>
+    </section>
+    <section class="card c4">
+        <div class="hd"><h3>Cuenta</h3></div>
+        <div class="bd col">
+            <div class="cifra"><span class="muted">Deuda total</span><b class="num">@Formato.Dinero(c.DeudaTotal)</b></div>
+            <div class="cifra"><span class="muted">Vencido</span><b class="num @(c.DeudaVencida > 0 ? "malo" : "")">@Formato.Dinero(c.DeudaVencida)</b></div>
+            <div class="cifra"><span class="muted">Próximo vencimiento</span><b>@Formato.Fecha(c.ProximoVencimiento)</b></div>
+            @if (c.Estado == "Activo" && p.CargosManuales)
+            {
+                <a class="btn" href="/cargos/nuevo?contrato=@c.Id">@Iconos.Svg("plus", "s")Cargo manual</a>
+            }
+        </div>
+    </section>
+</div>
+<section class="card espacio">
+    <div class="hd"><h3>Cargos</h3><a class="btn sm" href="/cargos?contrato=@c.Id">Ver en cargos</a></div>
+    @if (Model.Cargos.Count == 0)
+    {
+        <div class="vacio"><span>@(c.Estado == "Activo" ? "Los cargos de renta se generan solos según el día de pago y los días de aviso." : "Todavía no hay cargos.")</span></div>
+    }
+    else
+    {
+        <div class="tw">
+            <table class="tbl">
+                <thead><tr><th>Cargo</th><th>Vence</th><th class="r">Monto</th><th class="r">Saldo</th><th>Situación</th></tr></thead>
+                <tbody>
+                    @foreach (var k in Model.Cargos.Take(24))
+                    {
+                        <tr>
+                            <td data-l="Cargo">@k.Descripcion<small class="muted bloque">@Estados.Texto(k.Origen)</small></td>
+                            <td data-l="Vence">@Formato.Fecha(k.FechaVencimiento)</td>
+                            <td data-l="Monto" class="r num">@Formato.Dinero(k.Monto)</td>
+                            <td data-l="Saldo" class="r num">@Formato.Dinero(k.Saldo)</td>
+                            <td data-l="Situación"><span class="chip @Estados.Clase(k.Situacion)">@k.Situacion</span>@if (k.DiasAtraso > 0) { <small class="muted bloque">@k.DiasAtraso días de atraso</small> }</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+</section>
+<section class="card espacio">
+    <div class="hd"><h3>Pagos</h3></div>
+    @if (Model.Pagos.Count == 0)
+    {
+        <div class="vacio"><span>Sin pagos registrados.</span></div>
+    }
+    else
+    {
+        <div class="tw">
+            <table class="tbl">
+                <thead><tr><th>Pago</th><th>Fecha</th><th>Método</th><th class="r">Monto</th><th>Estado</th><th></th></tr></thead>
+                <tbody>
+                    @foreach (var g in Model.Pagos)
+                    {
+                        <tr>
+                            <td data-l="Pago"><a class="mono enlace-fila" href="/pagos/@g.PagoId">@g.Numero</a></td>
+                            <td data-l="Fecha">@Formato.Fecha(g.FechaLocal)</td>
+                            <td data-l="Método">@g.Metodo<small class="muted bloque">@g.Referencia</small></td>
+                            <td data-l="Monto" class="r num">@Formato.Dinero(g.Monto)</td>
+                            <td data-l="Estado"><span class="chip @Estados.Clase(g.Estado)">@g.Estado</span></td>
+                            <td><div class="acciones"><a class="btn sm" href="/pagos/@g.PagoId/comprobante">Comprobante</a></div></td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+</section>
+<section class="card espacio">
+    <div class="hd"><h3>Condiciones</h3><span class="muted">Cada cambio crea una versión nueva; las anteriores no se modifican</span></div>
+    <div class="tw">
+        <table class="tbl">
+            <thead><tr><th>Versión</th><th>Vigencia</th><th class="r">Renta</th><th>Día de pago</th><th>Mora</th><th>Motivo</th></tr></thead>
+            <tbody>
+                @foreach (var k in Model.Condiciones)
+                {
+                    <tr>
+                        <td data-l="Versión" class="num">@k.NumeroVersion @if (k == v && c.Estado == "Activo") { <span class="chip ok">Vigente</span> }</td>
+                        <td data-l="Vigencia">@Formato.Fecha(k.VigenteDesde) – @(k.VigenteHasta is null ? "sin fin" : Formato.Fecha(k.VigenteHasta))</td>
+                        <td data-l="Renta" class="r num">@Formato.Dinero(k.Renta)</td>
+                        <td data-l="Día">@k.DiaPago</td>
+                        <td data-l="Mora">@(k.AplicaMora ? $"{Formato.Porcentaje(k.PorcentajeMoraDiario)} tras {k.DiasGracia} días" : "No")</td>
+                        <td data-l="Motivo">@k.Motivo<small class="muted bloque">@k.Plantilla</small></td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+    @if (c.Estado == "Activo" && p.CambiarCondiciones)
+    {
+        <details class="desplegable">
+            <summary class="btn">Cambiar condiciones</summary>
+            <form method="post" asp-action="Condiciones" asp-route-id="@c.Id" class="formulario" data-formulario>
+                <div class="campos">
+                    <div class="fld"><label for="VigenteDesde">A partir de</label><input id="VigenteDesde" name="VigenteDesde" type="date" class="inp" min="@hoy.AddDays(1).ToString("yyyy-MM-dd")" max="@c.FechaFin.ToString("yyyy-MM-dd")" required /></div>
+                    <div class="fld"><label for="Renta">Renta nueva</label><div class="pre"><span>$</span><input id="Renta" name="Renta" type="number" step="0.01" min="0.01" class="inp num" placeholder="@v?.Renta.ToString("0.00", System.Globalization.CultureInfo.InvariantCulture)" /></div></div>
+                    <div class="fld"><label for="DiaPago">Día de pago</label><input id="DiaPago" name="DiaPago" type="number" min="1" max="31" class="inp num" placeholder="@v?.DiaPago" /></div>
+                    <div class="fld"><label for="DiasGracia">Días de gracia</label><input id="DiasGracia" name="DiasGracia" type="number" min="0" max="60" class="inp num" placeholder="@v?.DiasGracia" /></div>
+                    <div class="fld"><label for="PorcentajeMora">Mora diaria (%)</label><input id="PorcentajeMora" name="PorcentajeMora" type="number" min="0" max="5" step="0.0001" class="inp num" placeholder="@v?.PorcentajeMoraDiario.ToString("0.####", System.Globalization.CultureInfo.InvariantCulture)" /></div>
+                    <div class="fld"><label for="AplicaMora">Cobrar mora</label><select id="AplicaMora" name="AplicaMora" class="sel"><option value="">Sin cambio</option><option value="si">Sí</option><option value="no">No</option></select></div>
+                    <div class="fld"><label for="PermiteParciales">Pagos parciales</label><select id="PermiteParciales" name="PermiteParciales" class="sel"><option value="">Sin cambio</option><option value="si">Se permiten</option><option value="no">No se permiten</option></select></div>
+                    <div class="fld ancho"><label for="Motivo">Motivo del cambio</label><input id="Motivo" name="Motivo" class="inp" maxlength="500" required placeholder="Ej. Ajuste anual de renta" /></div>
+                </div>
+                <div class="pie"><span class="hint">Deja en blanco lo que no cambia. Los cargos ya emitidos no se modifican.</span><button type="submit" class="btn pri">Guardar nueva versión</button></div>
+            </form>
+        </details>
+    }
+</section>
+@if (Model.Documentos.Count > 0)
+{
+    <section class="card espacio">
+        <div class="hd"><h3>Documentos</h3></div>
+        <ul class="lista">
+            @foreach (var d in Model.Documentos)
+            {
+                <li><span><b class="mono">@d.Folio</b> · @Estados.Texto(d.Tipo) @if (d.Pago is not null) { <span class="mono">@d.Pago</span> } <small class="muted">@Formato.FechaHora(d.FechaCreacion)</small></span><a class="btn sm" href="/documentos/@d.Id/pdf">Descargar</a></li>
+            }
+        </ul>
+    </section>
+}
+@if (c.Estado == "Activo" && p.ActivarContratos)
+{
+    <section class="card espacio peligro">
+        <div class="hd"><h3>Finalizar contrato</h3></div>
+        <form method="post" asp-action="Finalizar" asp-route-id="@c.Id" class="bd linea-form" data-formulario>
+            <input name="fecha" type="date" class="inp" value="@hoy.ToString("yyyy-MM-dd")" aria-label="Fecha de terminación" required />
+            <input name="motivo" class="inp" placeholder="Motivo de la terminación" aria-label="Motivo" maxlength="500" required />
+            <button type="submit" class="btn">Finalizar</button>
+        </form>
+    </section>
+}
+@if (enTramite && p.CrearContratos)
+{
+    <section class="card espacio peligro">
+        <div class="hd"><h3>Anular contrato</h3><span class="muted">Solo si todavía no está activo</span></div>
+        <form method="post" asp-action="Anular" asp-route-id="@c.Id" class="bd linea-form" data-formulario>
+            <input name="motivo" class="inp" placeholder="Motivo de la anulación" aria-label="Motivo" maxlength="500" required />
+            <button type="submit" class="btn">Anular</button>
+        </form>
+    </section>
+}

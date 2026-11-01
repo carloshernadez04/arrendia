@@ -1,0 +1,52 @@
+@model EstadoCuentaModelo
+@{
+    var c = Model.Contrato;
+    var e = Model.Estado;
+    ViewData["Title"] = $"Estado de cuenta {c.Numero}";
+    if (User.IsInRole("Inquilino"))
+    {
+        Layout = "_LayoutPortal";
+    }
+    var accion = User.IsInRole("Inquilino") ? $"/portal/contratos/{c.Id}/estado-cuenta" : $"/contratos/{c.Id}/estado-cuenta";
+}
+<div class="ph">
+    <div>
+        <h2>Estado de cuenta</h2>
+        <p class="muted"><span class="mono">@c.Numero</span> · @c.Inquilino · @c.Unidad, @c.Propiedad</p>
+    </div>
+    <div class="row">
+        <a class="btn" href="@(User.IsInRole("Inquilino") ? "/portal" : $"/contratos/{c.Id}")">@Iconos.Svg("chevL", "s")Volver</a>
+        <form method="post" action="@accion/pdf" data-formulario>
+            <input type="hidden" name="desde" value="@e.Desde.ToString("yyyy-MM-dd")" />
+            <input type="hidden" name="hasta" value="@e.Hasta.ToString("yyyy-MM-dd")" />
+            <button type="submit" class="btn pri">@Iconos.Svg("file", "s")Descargar PDF</button>
+        </form>
+    </div>
+</div>
+<form method="get" action="@accion" class="toolbar">
+    <label class="row">Desde <input name="desde" type="date" class="inp" value="@e.Desde.ToString("yyyy-MM-dd")" /></label>
+    <label class="row">Hasta <input name="hasta" type="date" class="inp" value="@e.Hasta.ToString("yyyy-MM-dd")" /></label>
+    <button type="submit" class="btn">Ver</button>
+</form>
+<section class="card">
+    <div class="tw">
+        <table class="tbl">
+            <thead><tr><th>Fecha</th><th>Documento</th><th>Descripción</th><th class="r">Cargo</th><th class="r">Abono</th><th class="r">Saldo</th></tr></thead>
+            <tbody>
+                <tr class="apagada"><td colspan="5" data-l="">Saldo al @Formato.Fecha(e.Desde)</td><td class="r num" data-l="Saldo">@Formato.Dinero(e.SaldoInicial)</td></tr>
+                @foreach (var m in e.Movimientos)
+                {
+                    <tr>
+                        <td data-l="Fecha">@Formato.Fecha(m.Fecha)</td>
+                        <td data-l="Documento" class="mono">@m.Documento</td>
+                        <td data-l="Descripción">@m.Descripcion</td>
+                        <td data-l="Cargo" class="r num">@(m.Cargo == 0 ? "" : Formato.Dinero(m.Cargo))</td>
+                        <td data-l="Abono" class="r num">@(m.Abono == 0 ? "" : Formato.Dinero(m.Abono))</td>
+                        <td data-l="Saldo" class="r num">@Formato.Dinero(m.Saldo)</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+    <div class="pie-tabla row sp"><span class="muted">@e.Movimientos.Count movimientos</span><b>Saldo final: @Formato.Dinero(e.SaldoFinal)</b></div>
+</section>

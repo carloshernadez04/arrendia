@@ -49,3 +49,15 @@ public sealed class ConfirmarCorreoModelo
     public required string Nombre { get; init; }
     public required string EmailNuevo { get; init; }
 }
+
+public sealed class ConfiguracionModelo
+{
+    public required string Seccion { get; init; }
+    public IReadOnlyList<Plantilla> Plantillas { get; set; } = [];
+    public IReadOnlyList<Concepto> Conceptos { get; set; } = [];
+    public IReadOnlyList<ElementoCatalogo> TiposUnidad { get; set; } = [];
+    public IReadOnlyList<ElementoCatalogo> Especialidades { get; set; } = [];
+    public IReadOnlyList<ElementoCatalogo> Categorias { get; set; } = [];
+    public IReadOnlyList<Feriado> Feriados { get; set; } = [];
+    public IReadOnlyList<Parametro> Parametros { get; set; } = [];
+}
