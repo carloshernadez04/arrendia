@@ -6,7 +6,19 @@ public static class Formato
 {
     private static readonly CultureInfo Dolares = CultureInfo.GetCultureInfo("en-US");
     private static readonly CultureInfo Espanol = CultureInfo.GetCultureInfo("es-SV");
-    private static readonly TimeZoneInfo ZonaSv = TimeZoneInfo.FindSystemTimeZoneById("America/El_Salvador");
+    private static readonly TimeZoneInfo ZonaSv = BuscarZona();
+
+    private static TimeZoneInfo BuscarZona()
+    {
+        try
+        {
+            return TimeZoneInfo.FindSystemTimeZoneById("America/El_Salvador");
+        }
+        catch (TimeZoneNotFoundException)
+        {
+            return TimeZoneInfo.CreateCustomTimeZone("El Salvador", TimeSpan.FromHours(-6), "El Salvador", "El Salvador");
+        }
+    }
 
     public static string Dinero(decimal? monto) => monto is null ? "—" : monto.Value.ToString("C2", Dolares);
 

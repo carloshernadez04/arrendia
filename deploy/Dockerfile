@@ -18,7 +18,7 @@ WORKDIR /app
 ENV ASPNETCORE_HTTP_PORTS=8080 \
     DOTNET_RUNNING_IN_CONTAINER=true
 COPY --from=build /app/publish .
-RUN mkdir /claves && chown 1654:1654 /claves
+RUN mkdir /claves /archivos && chown 1654:1654 /claves /archivos
 # 1654 = usuario "app" sin privilegios de las imágenes oficiales de .NET
 USER 1654
 EXPOSE 8080
