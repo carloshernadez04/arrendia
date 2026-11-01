@@ -33,6 +33,17 @@ builder.Services.AddScoped<IRepositorioConfiguracion, RepositorioConfiguracion>(
 builder.Services.AddScoped<IRepositorioContratos, RepositorioContratos>();
 builder.Services.AddScoped<IRepositorioCobros, RepositorioCobros>();
 builder.Services.AddScoped<IRepositorioMantenimiento, RepositorioMantenimiento>();
+builder.Services.AddScoped<IRepositorioPortal, RepositorioPortal>();
+builder.Services.AddScoped<ProcesadorAvisos>();
+builder.Services.Configure<OpcionesWompi>(builder.Configuration.GetSection(OpcionesWompi.Seccion));
+if (builder.Configuration.GetSection(OpcionesWompi.Seccion).Get<OpcionesWompi>()?.EstaConfigurado == true)
+{
+    builder.Services.AddScoped<IPasarelaPago, PasarelaWompi>();
+}
+else
+{
+    builder.Services.AddScoped<IPasarelaPago, PasarelaSimulada>();
+}
 builder.Services.AddScoped<ServicioDocumentos>();
 builder.Services.AddScoped<EnvioInmediato>();
 builder.Services.AddScoped<ServicioInvitaciones>();

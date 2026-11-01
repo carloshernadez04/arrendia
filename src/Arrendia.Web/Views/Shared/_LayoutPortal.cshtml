@@ -1,10 +1,13 @@
 @{
     var nombre = User.Identity?.Name ?? "";
+    var ruta = Context.Request.Path.Value ?? "";
+    string? Actual(string prefijo) => prefijo == "/portal" ? (ruta is "/portal" or "/portal/" ? "page" : null) : (ruta.StartsWith(prefijo, StringComparison.OrdinalIgnoreCase) ? "page" : null);
 }
 <!DOCTYPE html>
 <html lang="es">
 <head>
     <partial name="_Cabecera" />
+    @await RenderSectionAsync("Cabecera", required: false)
     <title>@(ViewData["Title"] is string t ? $"{t} · Arrendia" : "Arrendia")</title>
 </head>
 <body>
@@ -12,10 +15,10 @@
         <header class="portal-top">
             @Iconos.Logo<b class="marca">Arrendia</b>
             <nav class="portal-nav" aria-label="Secciones">
-                <a href="/portal" aria-current="page">Inicio</a>
-                <span class="off">Pagar</span>
-                <span class="off">Documentos</span>
-                <span class="off">Reportes</span>
+                <a href="/portal" aria-current="@Actual("/portal")">Inicio</a>
+                <a href="/portal/pagar" aria-current="@Actual("/portal/pag")">Pagar</a>
+                <a href="/portal/documentos" aria-current="@Actual("/portal/documentos")">Documentos</a>
+                <a href="/portal/reportes" aria-current="@Actual("/portal/reportes")">Reportes</a>
             </nav>
             <span class="grow"></span>
             <partial name="_BotonTema" />
@@ -34,10 +37,10 @@
             @RenderBody()
         </main>
         <nav class="portal-barra" aria-label="Secciones">
-            <a href="/portal" aria-current="page">@Iconos.Svg("home")Inicio</a>
-            <span class="off">@Iconos.Svg("card")Pagar</span>
-            <span class="off">@Iconos.Svg("file")Documentos</span>
-            <span class="off">@Iconos.Svg("wrench")Reportes</span>
+            <a href="/portal" aria-current="@Actual("/portal")">@Iconos.Svg("home")Inicio</a>
+            <a href="/portal/pagar" aria-current="@Actual("/portal/pag")">@Iconos.Svg("card")Pagar</a>
+            <a href="/portal/documentos" aria-current="@Actual("/portal/documentos")">@Iconos.Svg("file")Documentos</a>
+            <a href="/portal/reportes" aria-current="@Actual("/portal/reportes")">@Iconos.Svg("wrench")Reportes</a>
         </nav>
     </div>
 </body>

@@ -1,16 +1,86 @@
+@model PortalModelo
 @{
     ViewData["Title"] = "Inicio";
     Layout = "_LayoutPortal";
     var nombre = (User.Identity?.Name ?? "").Split(' ')[0];
+    var proximo = Model.Pendientes.Where(c => c.Situacion != "Vencido").OrderBy(c => c.FechaVencimiento).FirstOrDefault();
 }
+<partial name="_Avisos" />
 <div class="col encabezado">
     <h2>Hola, @nombre</h2>
-    <p class="muted">Este es tu portal de inquilino.</p>
+    <p class="muted">@(Model.Deuda == 0 ? "Estás al día. ¡Gracias!" : $"Tienes {Formato.Dinero(Model.Deuda)} pendiente.")</p>
 </div>
-<div class="card">
-    <div class="vacio">
-        @Iconos.Svg("home", "xl")
-        <b>Tu estado de cuenta aparecerá aquí</b>
-        <span>Podrás ver tus cargos, pagar con tarjeta, descargar comprobantes y reportar problemas.</span>
-    </div>
+<div class="kpis">
+    <div class="kpi @(Model.Vencido > 0 ? "malo" : "")"><span>Vencido</span><b>@Formato.Dinero(Model.Vencido)</b></div>
+    <div class="kpi"><span>Total pendiente</span><b>@Formato.Dinero(Model.Deuda)</b></div>
+    <div class="kpi"><span>Próximo vencimiento</span><b>@(proximo is null ? "—" : Formato.Fecha(proximo.FechaVencimiento))</b></div>
+</div>
+@if (Model.Deuda > 0 && Model.PagoEnLinea)
+{
+    <a class="btn pri lg blk espacio-abajo" href="/portal/pagar">@Iconos.Svg("card", "s")Pagar con tarjeta</a>
+}
+<section class="card">
+    <div class="hd"><h3>Cargos pendientes</h3></div>
+    @if (Model.Pendientes.Count == 0)
+    {
+        <div class="vacio">@Iconos.Svg("check", "xl")<b>No tienes cargos pendientes</b></div>
+    }
+    else
+    {
+        <ul class="lista">
+            @foreach (var c in Model.Pendientes)
+            {
+                <li>
+                    <span>@c.Descripcion<small class="muted bloque">Vence @Formato.Fecha(c.FechaVencimiento) · @c.Unidad</small></span>
+                    <span class="col derecha"><b class="num">@Formato.Dinero(c.Saldo)</b><span class="chip @Estados.Clase(c.Situacion)">@c.Situacion</span></span>
+                </li>
+            }
+        </ul>
+    }
+</section>
+<section class="card espacio">
+    <div class="hd"><h3>Mis contratos</h3></div>
+    <ul class="lista">
+        @foreach (var c in Model.Contratos)
+        {
+            <li>
+                <span><b class="mono">@c.Numero</b> · @c.Unidad, @c.Propiedad<small class="muted bloque">@Formato.Fecha(c.FechaInicio) al @Formato.Fecha(c.FechaFin) · renta @Formato.Dinero(c.RentaVigente)</small></span>
+                <a class="btn sm" href="/portal/contratos/@c.ContratoId/estado-cuenta">Estado de cuenta</a>
+            </li>
+        }
+    </ul>
+</section>
+<div class="grid espacio">
+    <section class="card c6">
+        <div class="hd"><h3>Últimos pagos</h3><a class="btn sm" href="/portal/pagos">Ver todos</a></div>
+        @if (Model.Pagos.Count == 0)
+        {
+            <div class="vacio"><span>Todavía no hay pagos.</span></div>
+        }
+        else
+        {
+            <ul class="lista">
+                @foreach (var p in Model.Pagos)
+                {
+                    <li><span class="mono">@p.Numero<small class="muted bloque">@Formato.Fecha(p.FechaLocal) · @p.Metodo</small></span><a class="btn sm" href="/portal/pagos/@p.PagoId/comprobante">@Formato.Dinero(p.Monto)</a></li>
+                }
+            </ul>
+        }
+    </section>
+    <section class="card c6">
+        <div class="hd"><h3>Reportes abiertos</h3><a class="btn sm" href="/portal/reportes/nuevo">Reportar un problema</a></div>
+        @if (Model.Reportes.Count == 0)
+        {
+            <div class="vacio"><span>No tienes reportes abiertos.</span></div>
+        }
+        else
+        {
+            <ul class="lista">
+                @foreach (var r in Model.Reportes)
+                {
+                    <li><a href="/portal/reportes/@r.ReporteId">@r.Titulo</a><span class="chip @Estados.Clase(r.Estado)">@r.Estado</span></li>
+                }
+            </ul>
+        }
+    </section>
 </div>

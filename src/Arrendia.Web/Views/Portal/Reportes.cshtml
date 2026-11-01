@@ -1,0 +1,25 @@
+@model ReportesPortalModelo
+@{
+    ViewData["Title"] = "Reportes";
+    Layout = "_LayoutPortal";
+}
+<partial name="_Avisos" />
+<div class="ph">
+    <div><h2>Reportes</h2><p class="muted">Problemas de tu unidad que reportaste.</p></div>
+    <a class="btn pri" href="/portal/reportes/nuevo">@Iconos.Svg("plus", "s")Reportar un problema</a>
+</div>
+<section class="card">
+    @if (Model.Reportes.Count == 0)
+    {
+        <div class="vacio">@Iconos.Svg("wrench", "xl")<b>No has reportado problemas</b><span>Si algo se daña en tu unidad, repórtalo aquí con fotos.</span></div>
+    }
+    else
+    {
+        <ul class="lista">
+            @foreach (var r in Model.Reportes)
+            {
+                <li><span><a href="/portal/reportes/@r.ReporteId">@r.Titulo</a><small class="muted bloque mono">@r.Numero · @Formato.FechaHora(r.FechaReporte)</small></span><span class="chip @Estados.Clase(r.Estado)">@r.Estado</span></li>
+            }
+        </ul>
+    }
+</section>
