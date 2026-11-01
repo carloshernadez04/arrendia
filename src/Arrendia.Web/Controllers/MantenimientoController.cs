@@ -353,13 +353,13 @@ public static class Lugar
 
 [AllowAnonymous]
 [Route("t/{token}")]
-[EnableRateLimiting(CuentaController.PoliticaLimite)]
 public sealed class TecnicoController(IRepositorioMantenimiento repositorio, IRepositorioArchivos archivos, IAlmacenArchivos almacen) : Controller
 {
     [HttpGet("")]
     public async Task<IActionResult> Index(string token, CancellationToken cancelacion) => View(await ModeloAsync(token, null, cancelacion));
 
     [HttpPost("pin")]
+    [EnableRateLimiting(CuentaController.PoliticaLimite)]
     public async Task<IActionResult> Pin(string token, string? pin, CancellationToken cancelacion)
     {
         if (!TokenSeguro.TieneFormatoValido(token))
@@ -388,6 +388,7 @@ public sealed class TecnicoController(IRepositorioMantenimiento repositorio, IRe
     }
 
     [HttpPost("cerrar")]
+    [EnableRateLimiting(CuentaController.PoliticaLimite)]
     public async Task<IActionResult> Cerrar(string token, List<IFormFile> fotos, string? comentario, CancellationToken cancelacion)
     {
         if (!TokenSeguro.TieneFormatoValido(token))

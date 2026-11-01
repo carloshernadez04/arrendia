@@ -211,6 +211,7 @@ app.UseAuthorization();
 
 app.MapStaticAssets().AllowAnonymous();
 app.MapHealthChecks("/health").AllowAnonymous();
+app.MapPost("/wompi/aviso", AvisoWompi.RecibirAsync).AllowAnonymous().DisableAntiforgery();
 app.MapGet("/robots.txt", () => Results.Text("User-agent: *\nDisallow: /\n", "text/plain")).AllowAnonymous();
 app.MapControllers().WithStaticAssets();
 app.MapFallback(() => Results.NotFound()).AllowAnonymous();

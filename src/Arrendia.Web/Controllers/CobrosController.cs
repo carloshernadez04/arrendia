@@ -80,6 +80,12 @@ public sealed class CargosController(
             ModelState.AddModelError(nameof(modelo.FechaVencimiento), "El vencimiento no puede ser anterior a hoy.");
         }
 
+        if (modelo.ContratoId is { } contratoId && await contratos.ObtenerAsync(contratoId, User.Id(), cancelacion) is { } contrato
+            && contrato.FechaInicio.Date > Formato.HoySv())
+        {
+            ModelState.AddModelError(nameof(modelo.ContratoId), $"El contrato empieza el {Formato.Fecha(contrato.FechaInicio)}: los cargos manuales se crean desde esa fecha.");
+        }
+
         string? tipo = null;
         if (modelo.Respaldo is { Length: > 0 })
         {

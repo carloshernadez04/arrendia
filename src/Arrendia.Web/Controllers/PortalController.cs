@@ -279,31 +279,3 @@ public sealed partial class PortalController(
     [LoggerMessage(Level = LogLevel.Error, Message = "La pasarela de pago no respondió")]
     private static partial void PasarelaNoResponde(ILogger registro, Exception error);
 }
-
-[AllowAnonymous]
-[IgnoreAntiforgeryToken]
-[Route("wompi")]
-public sealed class WompiController(ProcesadorAvisos avisos) : Controller
-{
-    [HttpPost("aviso")]
-    public async Task<IActionResult> Aviso(CancellationToken cancelacion)
-    {
-        using var lector = new StreamReader(Request.Body);
-        var cuerpo = await lector.ReadToEndAsync(cancelacion);
-        if (cuerpo.Length is 0 or > 100_000)
-        {
-            return BadRequest();
-        }
-
-        var firma = Request.Headers["wompi_hash"].FirstOrDefault() ?? Request.Headers["Wompi-Hash"].FirstOrDefault();
-        try
-        {
-            var resultado = await avisos.ProcesarAsync(cuerpo, firma, cancelacion);
-            return resultado == "rechazado" ? Unauthorized() : Ok();
-        }
-        catch (ReglaDeNegocioException)
-        {
-            return Ok();
-        }
-    }
-}

@@ -180,3 +180,26 @@ public sealed partial class ProcesadorAvisos(IRepositorioPortal repositorio, IPa
     [LoggerMessage(Level = LogLevel.Warning, Message = "Aviso de pago rechazado {EventoId}")]
     private static partial void AvisoRechazado(ILogger registro, long eventoId);
 }
+
+public static class AvisoWompi
+{
+    public static async Task<IResult> RecibirAsync(HttpRequest peticion, ProcesadorAvisos avisos, CancellationToken cancelacion)
+    {
+        using var lector = new StreamReader(peticion.Body);
+        var cuerpo = await lector.ReadToEndAsync(cancelacion);
+        if (cuerpo.Length is 0 or > 100_000)
+        {
+            return Results.BadRequest();
+        }
+
+        var firma = peticion.Headers["wompi_hash"].FirstOrDefault() ?? peticion.Headers["Wompi-Hash"].FirstOrDefault();
+        try
+        {
+            return await avisos.ProcesarAsync(cuerpo, firma, cancelacion) == "rechazado" ? Results.Unauthorized() : Results.Ok();
+        }
+        catch (ReglaDeNegocioException)
+        {
+            return Results.Ok();
+        }
+    }
+}

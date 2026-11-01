@@ -80,6 +80,18 @@ public partial class AccesoTests(WebApplicationFactory<Program> fabrica) : IClas
     }
 
     [Fact]
+    public async Task UnAvisoSinFirmaValidaSeRechazaSinTocarLaBase()
+    {
+        using var cliente = ClienteSinRedirecciones();
+        using var contenido = new StringContent("{\"a\":1}", System.Text.Encoding.UTF8, "application/json");
+
+        var respuesta = await cliente.PostAsync(new Uri("/wompi/aviso", UriKind.Relative), contenido);
+
+        Assert.NotEqual(HttpStatusCode.OK, respuesta.StatusCode);
+        Assert.NotEqual(HttpStatusCode.BadRequest, respuesta.StatusCode);
+    }
+
+    [Fact]
     public async Task LaRaizSinSesionMandaAEntrar()
     {
         using var cliente = ClienteSinRedirecciones();
