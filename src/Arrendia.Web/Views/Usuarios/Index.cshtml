@@ -1,0 +1,31 @@
+@model IReadOnlyList<Arrendia.Web.Data.UsuarioFila>
+@{
+    ViewData["Title"] = "Usuarios y permisos";
+}
+<partial name="_Avisos" />
+<div class="ph">
+    <div>
+        <h2>Usuarios y permisos</h2>
+        <p class="muted">Administradores y supervisores. Los inquilinos se invitan desde su ficha.</p>
+    </div>
+    <a class="btn pri" asp-action="Nuevo">@Iconos.Svg("plus", "s")Invitar usuario</a>
+</div>
+<section class="card">
+    <div class="tw">
+        <table class="tbl">
+            <thead><tr><th>Usuario</th><th>Rol</th><th class="r">Propiedades</th><th>Último acceso</th><th>Acceso</th></tr></thead>
+            <tbody>
+                @foreach (var u in Model)
+                {
+                    <tr>
+                        <td data-l="Usuario"><a class="enlace-fila" asp-action="Detalle" asp-route-id="@u.Id">@u.Nombre</a><small class="muted bloque">@u.Email</small></td>
+                        <td data-l="Rol">@u.Rol</td>
+                        <td data-l="Propiedades" class="r num">@(u.Rol == "Supervisor" ? u.Propiedades.ToString(System.Globalization.CultureInfo.InvariantCulture) : "Todas")</td>
+                        <td data-l="Último acceso">@Formato.FechaHora(u.UltimoAcceso)</td>
+                        <td data-l="Acceso"><span class="chip @Estados.Clase(u.Acceso)">@u.Acceso</span></td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</section>

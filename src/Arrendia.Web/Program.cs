@@ -23,6 +23,29 @@ builder.Services.AddSingleton(TimeProvider.System);
 builder.Services.AddScoped<IBaseDatos, BaseDatos>();
 builder.Services.AddScoped<IRepositorioCuentas, RepositorioCuentas>();
 builder.Services.AddScoped<IRepositorioPropiedades, RepositorioPropiedades>();
+builder.Services.AddScoped<IRepositorioArchivos, RepositorioArchivos>();
+builder.Services.AddScoped<IRepositorioPermisos, RepositorioPermisos>();
+builder.Services.AddScoped<IRepositorioDocumentos, RepositorioDocumentos>();
+builder.Services.AddScoped<IRepositorioCorreos, RepositorioCorreos>();
+builder.Services.AddScoped<IRepositorioUsuarios, RepositorioUsuarios>();
+builder.Services.AddScoped<IRepositorioInquilinos, RepositorioInquilinos>();
+builder.Services.AddScoped<ServicioDocumentos>();
+builder.Services.AddScoped<EnvioInmediato>();
+builder.Services.AddScoped<ServicioInvitaciones>();
+builder.Services.AddHttpClient();
+
+PlantillasPdf.Configurar();
+builder.Services.Configure<OpcionesArchivos>(builder.Configuration.GetSection(OpcionesArchivos.Seccion));
+builder.Services.Configure<OpcionesCloudinary>(builder.Configuration.GetSection(OpcionesCloudinary.Seccion));
+builder.Services.AddSingleton<AlmacenLocal>();
+if (builder.Configuration.GetSection(OpcionesCloudinary.Seccion).Get<OpcionesCloudinary>()?.EstaConfigurado == true)
+{
+    builder.Services.AddSingleton<IAlmacenArchivos, AlmacenCloudinary>();
+}
+else
+{
+    builder.Services.AddSingleton<IAlmacenArchivos>(servicios => servicios.GetRequiredService<AlmacenLocal>());
+}
 builder.Services.AddScoped<IPasswordHasher<UsuarioAcceso>, PasswordHasher<UsuarioAcceso>>();
 builder.Services.AddScoped<ServicioAcceso>();
 builder.Services.AddScoped<ValidacionSesion>();
@@ -98,6 +121,11 @@ var salud = builder.Services.AddHealthChecks();
 if (!string.IsNullOrEmpty(builder.Configuration.GetConnectionString(BaseDatos.NombreCadena)))
 {
     salud.AddCheck<SaludBaseDatos>("base-de-datos");
+    if (builder.Configuration.GetValue("Procesos:Habilitado", true))
+    {
+        builder.Services.AddHostedService<ProcesosDiarios>();
+        builder.Services.AddHostedService<ProcesadorCorreos>();
+    }
 }
 
 builder.Services.Configure<ForwardedHeadersOptions>(opciones =>

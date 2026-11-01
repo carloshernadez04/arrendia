@@ -431,3 +431,4 @@ FodyWeavers.xsd
 .env
 db-local/*
 !db-local/LEEME.txt
+src/Arrendia.Web/App_Data/

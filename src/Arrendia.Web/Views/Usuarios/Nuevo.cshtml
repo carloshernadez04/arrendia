@@ -1,0 +1,51 @@
+@model InvitacionFormulario
+@{
+    ViewData["Title"] = "Invitar usuario";
+}
+<div class="ph">
+    <div>
+        <h2>Invitar usuario</h2>
+        <p class="muted">Le llega un correo para elegir su contraseña. El enlace vence en 7 días.</p>
+    </div>
+</div>
+<form method="post" class="card formulario" novalidate data-formulario>
+    <div asp-validation-summary="ModelOnly" class="aviso error"></div>
+    <div class="campos">
+        <div class="fld">
+            <label asp-for="Nombre">Nombre</label>
+            <input asp-for="Nombre" class="inp" />
+            <span asp-validation-for="Nombre" class="error-campo"></span>
+        </div>
+        <div class="fld">
+            <label asp-for="Email">Correo</label>
+            <input asp-for="Email" type="email" class="inp" />
+            <span asp-validation-for="Email" class="error-campo"></span>
+        </div>
+        <fieldset class="fld ancho opciones">
+            <legend class="etiqueta">Rol</legend>
+            <label class="opcion">
+                <input type="radio" name="Rol" value="Supervisor" checked="@(Model.Rol != "Administrador")" />
+                <span><b>Supervisor</b><small>Solo ve las propiedades que le asignes, con los permisos que elijas.</small></span>
+            </label>
+            <label class="opcion">
+                <input type="radio" name="Rol" value="Administrador" checked="@(Model.Rol == "Administrador")" />
+                <span><b>Administrador</b><small>Acceso completo, incluida la configuración.</small></span>
+            </label>
+        </fieldset>
+        <fieldset class="fld ancho" data-mostrar-si="Rol=Supervisor">
+            <legend class="etiqueta">Propiedades que supervisa</legend>
+            <div class="checks">
+                @foreach (var p in Model.Opciones)
+                {
+                    <label class="chk"><input type="checkbox" name="Propiedades" value="@p.Id" checked="@Model.Propiedades.Contains(p.Id)" /> <span>@p.Nombre</span></label>
+                }
+            </div>
+            <span asp-validation-for="Propiedades" class="error-campo"></span>
+            <span class="hint">Después de invitarlo puedes darle permisos para contratos, pagos y más.</span>
+        </fieldset>
+    </div>
+    <div class="pie">
+        <a class="btn" asp-action="Index">Cancelar</a>
+        <button type="submit" class="btn pri">Enviar invitación</button>
+    </div>
+</form>

@@ -1,0 +1,76 @@
+@model InquilinoFormulario
+@{
+    var nuevo = Model.Id is null;
+    ViewData["Title"] = nuevo ? "Nuevo inquilino" : "Editar inquilino";
+}
+<div class="ph">
+    <div>
+        <h2>@ViewData["Title"]</h2>
+        <p class="muted">Persona natural con DUI o empresa con NIT.</p>
+    </div>
+</div>
+<form method="post" class="card formulario" novalidate data-formulario>
+    <div asp-validation-summary="ModelOnly" class="aviso error"></div>
+    <div class="campos">
+        <fieldset class="fld ancho opciones">
+            <legend class="etiqueta">Tipo de persona</legend>
+            <label class="opcion">
+                <input type="radio" name="TipoPersona" value="N" checked="@(Model.TipoPersona != "J")" />
+                <span><b>Persona natural</b><small>Se identifica con su DUI.</small></span>
+            </label>
+            <label class="opcion">
+                <input type="radio" name="TipoPersona" value="J" checked="@(Model.TipoPersona == "J")" />
+                <span><b>Empresa</b><small>Se identifica con NIT y tiene representante legal.</small></span>
+            </label>
+        </fieldset>
+        <div class="fld ancho">
+            <label asp-for="Nombre"></label>
+            <input asp-for="Nombre" class="inp" placeholder="Ej. María Elena Rivas o Inversiones del Sur, S.A. de C.V." />
+            <span asp-validation-for="Nombre" class="error-campo"></span>
+        </div>
+        <div class="fld" data-mostrar-si="TipoPersona=N">
+            <label asp-for="Dui"></label>
+            <input asp-for="Dui" class="inp mono" placeholder="00000000-0" inputmode="numeric" maxlength="10" />
+            <span asp-validation-for="Dui" class="error-campo"></span>
+        </div>
+        <div class="fld">
+            <label asp-for="Nit"></label>
+            <input asp-for="Nit" class="inp mono" placeholder="0000-000000-000-0" inputmode="numeric" maxlength="17" />
+            <span class="hint" data-mostrar-si="TipoPersona=N">Opcional para personas naturales.</span>
+            <span asp-validation-for="Nit" class="error-campo"></span>
+        </div>
+        <div class="fld" data-mostrar-si="TipoPersona=J">
+            <label asp-for="RepresentanteLegal"></label>
+            <input asp-for="RepresentanteLegal" class="inp" />
+            <span asp-validation-for="RepresentanteLegal" class="error-campo"></span>
+        </div>
+        <div class="fld">
+            <label asp-for="Nrc"></label>
+            <input asp-for="Nrc" class="inp mono" placeholder="Opcional" />
+            <span asp-validation-for="Nrc" class="error-campo"></span>
+        </div>
+        <div class="fld">
+            <label asp-for="Telefono"></label>
+            <input asp-for="Telefono" class="inp mono" placeholder="7777-7777" inputmode="tel" />
+            <span asp-validation-for="Telefono" class="error-campo"></span>
+        </div>
+        <div class="fld ancho">
+            <label asp-for="DireccionFiscal"></label>
+            <input asp-for="DireccionFiscal" class="inp" placeholder="Opcional" />
+            <span asp-validation-for="DireccionFiscal" class="error-campo"></span>
+        </div>
+        @if (nuevo)
+        {
+            <div class="fld ancho">
+                <label asp-for="EmailContacto"></label>
+                <input asp-for="EmailContacto" class="inp" type="email" placeholder="correo@ejemplo.com" />
+                <span class="hint">Recibe los avisos de cobro y los comprobantes. Puedes agregar más contactos después.</span>
+                <span asp-validation-for="EmailContacto" class="error-campo"></span>
+            </div>
+        }
+    </div>
+    <div class="pie">
+        <a class="btn" href="@(nuevo ? Url.Action("Index") : Url.Action("Detalle", new { id = Model.Id }))">Cancelar</a>
+        <button type="submit" class="btn pri">@(nuevo ? "Registrar inquilino" : "Guardar cambios")</button>
+    </div>
+</form>

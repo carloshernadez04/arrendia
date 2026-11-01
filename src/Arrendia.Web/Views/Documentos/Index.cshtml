@@ -1,0 +1,48 @@
+@model DocumentosModelo
+@{
+    ViewData["Title"] = "Documentos y QR";
+    var f = Model.Filtro;
+}
+<div class="ph">
+    <div>
+        <h2>Documentos y QR</h2>
+        <p class="muted">Contratos, comprobantes, avisos de cobro y estados de cuenta emitidos. Cada uno tiene un código QR para verificarlo.</p>
+    </div>
+    <a class="btn" href="/verificar" target="_blank" rel="noopener">@Iconos.Svg("qr", "s")Verificar un documento</a>
+</div>
+<form method="get" class="toolbar" role="search">
+    <div class="buscar">@Iconos.Svg("search", "s")<input name="buscar" class="inp" value="@f.Buscar" placeholder="Folio, contrato, pago o inquilino" aria-label="Buscar" /></div>
+    <select name="tipo" class="sel" aria-label="Tipo">
+        <option value="">Todos los tipos</option>
+        @foreach (var t in Arrendia.Web.Controllers.DocumentosController.Tipos) { <option value="@t" selected="@(t == f.Tipo)">@Estados.Texto(t)</option> }
+    </select>
+    <button type="submit" class="btn">Filtrar</button>
+</form>
+<section class="card">
+    @if (Model.Documentos.Count == 0)
+    {
+        <div class="vacio">@Iconos.Svg("file", "xl")<b>No hay documentos</b><span>Aparecen al generar un contrato, registrar un pago o enviar un aviso de cobro.</span></div>
+    }
+    else
+    {
+        <div class="tw">
+            <table class="tbl">
+                <thead><tr><th>Folio</th><th>Tipo</th><th>Contrato</th><th>Inquilino</th><th>Emitido</th><th>Código</th><th></th></tr></thead>
+                <tbody>
+                    @foreach (var d in Model.Documentos)
+                    {
+                        <tr>
+                            <td data-l="Folio"><b class="mono">@d.Folio</b></td>
+                            <td data-l="Tipo">@Estados.Texto(d.Tipo)@if (d.Pago is not null) { <small class="muted bloque mono">@d.Pago</small> }</td>
+                            <td data-l="Contrato"><a class="mono enlace-fila" href="/contratos/@d.ContratoId">@d.Contrato</a></td>
+                            <td data-l="Inquilino">@d.Inquilino</td>
+                            <td data-l="Emitido">@Formato.FechaHora(d.FechaCreacion)</td>
+                            <td data-l="Código"><a class="mono" href="/verificar/@d.CodigoVerificacion" target="_blank" rel="noopener">@d.CodigoVerificacion</a></td>
+                            <td><div class="acciones"><a class="btn sm" href="/documentos/@d.Id/pdf">Descargar</a></div></td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+</section>
