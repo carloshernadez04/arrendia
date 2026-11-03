@@ -30,7 +30,7 @@ Estado del proyecto. Marca `[x]` cuando una tarea quede terminada y desplegada e
 - [x] Respaldo diario automático y prueba semanal de restauración
 - [x] Dominios de QA y producción por Cloudflare Tunnel
 - [x] Corregir el paso que bloquea llaves de producción de Wompi en QA (ahora revisa `Wompi__PermitirProductivo`)
-- [ ] Cargar las llaves de SMTP, Wompi y Cloudinary en el `DOTENV` de cada ambiente
+- [x] Cargar las llaves de SMTP, Wompi y Cloudinary en el `DOTENV` de cada ambiente
 - [ ] Verificar el dominio en el proveedor SMTP (registros SPF y DKIM en Cloudflare)
 - [ ] Borrar los registros DNS basura en horasvoluntariado.site
 - [ ] Migrar a los dominios `arrendia.site` y `qa.arrendia.site`
