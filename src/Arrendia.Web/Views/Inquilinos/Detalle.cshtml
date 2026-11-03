@@ -1,0 +1,185 @@
+@model InquilinoDetalleModelo
+@{
+    var i = Model.Inquilino;
+    var p = Model.Permisos;
+    ViewData["Title"] = i.Nombre;
+    var principal = Model.Contactos.FirstOrDefault(c => c.EsPrincipal && c.Activo) ?? Model.Contactos.FirstOrDefault(c => c.Activo);
+}
+<partial name="_Avisos" />
+<div class="ph">
+    <div>
+        <h2>@i.Nombre <span class="chip @(i.Estado == "Activo" ? "ok" : "")">@i.Estado</span></h2>
+        <p class="muted">@(i.TipoPersona == "J" ? "Empresa" : "Persona natural") · @(i.TipoPersona == "J" ? $"NIT {i.Nit}" : $"DUI {i.Dui}")</p>
+    </div>
+    <div class="row">
+        <a class="btn" asp-action="Index">@Iconos.Svg("chevL", "s")Volver</a>
+        @if (p.CrearContratos)
+        {
+            <a class="btn" asp-action="Editar" asp-route-id="@i.Id">@Iconos.Svg("edit", "s")Editar</a>
+            @if (i.Estado == "Activo")
+            {
+                <a class="btn pri" href="/contratos/nuevo?inquilino=@i.Id">@Iconos.Svg("plus", "s")Nuevo contrato</a>
+            }
+        }
+    </div>
+</div>
+<div class="grid">
+    <section class="card c8">
+        <div class="hd"><h3>Datos</h3></div>
+        <div class="bd">
+            <dl class="kv">
+                @if (i.TipoPersona == "J") { <dt>Representante legal</dt><dd>@i.RepresentanteLegal</dd> }
+                @if (i.TipoPersona == "J") { <dt>NIT</dt><dd class="mono">@i.Nit</dd> } else { <dt>DUI</dt><dd class="mono">@i.Dui</dd> }
+                @if (i.TipoPersona == "N" && i.Nit is not null) { <dt>NIT</dt><dd class="mono">@i.Nit</dd> }
+                <dt>NRC</dt><dd class="mono">@(i.Nrc ?? "—")</dd>
+                <dt>Teléfono</dt><dd class="mono">@(i.Telefono ?? "—")</dd>
+                <dt>Dirección fiscal</dt><dd>@(i.DireccionFiscal ?? "—")</dd>
+                <dt>Registrado</dt><dd>@Formato.FechaHora(i.FechaCreacion)</dd>
+            </dl>
+        </div>
+    </section>
+    <section class="card c4">
+        <div class="hd"><h3>Portal del inquilino</h3><span class="chip @Estados.Clase(i.Acceso)">@i.Acceso</span></div>
+        <div class="bd col">
+            @if (i.UsuarioId is null)
+            {
+                <p class="muted">Con acceso al portal puede ver su estado de cuenta, pagar con tarjeta y reportar problemas.</p>
+                @if (p.ActivarContratos && i.Estado == "Activo")
+                {
+                    <form method="post" asp-action="InvitarPortal" asp-route-id="@i.Id" class="col" data-formulario>
+                        <label class="etiqueta" for="emailPortal">Correo para entrar</label>
+                        <input id="emailPortal" name="email" type="email" class="inp" value="@principal?.Email" required />
+                        <button type="submit" class="btn pri">Invitar al portal</button>
+                    </form>
+                }
+            }
+            else
+            {
+                <dl class="kv"><dt>Correo</dt><dd>@i.EmailPortal</dd></dl>
+                @if (p.ActivarContratos)
+                {
+                    <div class="row">
+                        @if (i.Acceso is "Invitación enviada" or "Invitación vencida")
+                        {
+                            <form method="post" asp-action="ReenviarPortal" asp-route-id="@i.Id"><button type="submit" class="btn sm">Reenviar invitación</button></form>
+                            @if (i.Acceso == "Invitación enviada")
+                            {
+                                <form method="post" asp-action="RevocarPortal" asp-route-id="@i.Id"><button type="submit" class="btn sm">Revocar</button></form>
+                            }
+                        }
+                        @if (i.Acceso == "Con acceso")
+                        {
+                            <form method="post" asp-action="AccesoPortal" asp-route-id="@i.Id"><input type="hidden" name="activo" value="false" /><button type="submit" class="btn sm">Desactivar acceso</button></form>
+                        }
+                        @if (i.Acceso == "Desactivado")
+                        {
+                            <form method="post" asp-action="AccesoPortal" asp-route-id="@i.Id"><input type="hidden" name="activo" value="true" /><button type="submit" class="btn sm">Reactivar acceso</button></form>
+                        }
+                    </div>
+                }
+            }
+        </div>
+    </section>
+</div>
+<section class="card espacio">
+    <div class="hd"><h3>Contratos</h3></div>
+    @if (Model.Contratos.Count == 0)
+    {
+        <div class="vacio"><b>Sin contratos</b><span>Aún no tiene contratos en tus propiedades.</span></div>
+    }
+    else
+    {
+        <div class="tw">
+            <table class="tbl">
+                <thead><tr><th>Contrato</th><th>Unidad</th><th>Vigencia</th><th class="r">Renta</th><th class="r">Deuda</th><th>Estado</th></tr></thead>
+                <tbody>
+                    @foreach (var c in Model.Contratos)
+                    {
+                        <tr>
+                            <td data-l="Contrato"><a class="mono enlace-fila" href="/contratos/@c.ContratoId">@c.Numero</a></td>
+                            <td data-l="Unidad">@c.Unidad<small class="muted bloque">@c.Propiedad</small></td>
+                            <td data-l="Vigencia">@Formato.Fecha(c.FechaInicio) – @Formato.Fecha(c.FechaFin)</td>
+                            <td data-l="Renta" class="r num">@Formato.Dinero(c.RentaVigente)</td>
+                            <td data-l="Deuda" class="r num">@Formato.Dinero(c.DeudaTotal)</td>
+                            <td data-l="Estado"><span class="chip @Estados.Clase(c.Estado)">@Estados.Texto(c.Estado)</span></td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+</section>
+<section class="card espacio">
+    <div class="hd"><h3>Contactos</h3><span class="muted">Reciben los avisos de cobro y los comprobantes</span></div>
+    @if (Model.Contactos.Count > 0)
+    {
+        <div class="tw">
+            <table class="tbl">
+                <thead><tr><th>Nombre</th><th>Correo</th><th>Teléfono</th><th>Avisos</th><th></th></tr></thead>
+                <tbody>
+                    @foreach (var c in Model.Contactos)
+                    {
+                        <tr class="@(c.Activo ? "" : "apagada")">
+                            <td data-l="Nombre">@c.Nombre @if (c.EsPrincipal) { <span class="chip info">Principal</span> } @if (!c.Activo) { <span class="chip">Quitado</span> }</td>
+                            <td data-l="Correo">@c.Email</td>
+                            <td data-l="Teléfono" class="mono">@(c.Telefono ?? "—")</td>
+                            <td data-l="Avisos">@(c.RecibeAvisos ? "Sí" : "No")</td>
+                            <td>
+                                @if (p.CrearContratos)
+                                {
+                                    <div class="acciones">
+                                        <details class="accion">
+                                            <summary class="btn sm">Editar</summary>
+                                            <form method="post" asp-action="EditarContacto" asp-route-id="@i.Id" asp-route-contactoId="@c.Id" class="emergente col" data-formulario>
+                                                <input name="Nombre" class="inp" value="@c.Nombre" aria-label="Nombre" required />
+                                                <input name="Email" type="email" class="inp" value="@c.Email" aria-label="Correo" required />
+                                                <input name="Telefono" class="inp mono" value="@c.Telefono" aria-label="Teléfono" placeholder="7777-7777" />
+                                                <label class="chk"><input type="checkbox" name="RecibeAvisos" value="true" checked="@c.RecibeAvisos" /><input type="hidden" name="RecibeAvisos" value="false" /> <span>Recibe avisos</span></label>
+                                                <button type="submit" class="btn pri sm">Guardar</button>
+                                            </form>
+                                        </details>
+                                        @if (c.Activo && !c.EsPrincipal)
+                                        {
+                                            <form method="post" asp-action="Principal" asp-route-id="@i.Id" asp-route-contactoId="@c.Id"><button type="submit" class="btn sm">Hacer principal</button></form>
+                                        }
+                                        @if (c.Activo)
+                                        {
+                                            <form method="post" asp-action="QuitarContacto" asp-route-id="@i.Id" asp-route-contactoId="@c.Id"><button type="submit" class="btn sm">Quitar</button></form>
+                                        }
+                                        else
+                                        {
+                                            <form method="post" asp-action="Principal" asp-route-id="@i.Id" asp-route-contactoId="@c.Id"><button type="submit" class="btn sm">Restaurar</button></form>
+                                        }
+                                    </div>
+                                }
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+    @if (p.CrearContratos)
+    {
+        <form method="post" asp-action="AgregarContacto" asp-route-id="@i.Id" class="linea-form" data-formulario>
+            <input name="NuevoContacto.Nombre" class="inp" placeholder="Nombre del contacto" aria-label="Nombre" required />
+            <input name="NuevoContacto.Email" type="email" class="inp" placeholder="correo@ejemplo.com" aria-label="Correo" required />
+            <input name="NuevoContacto.Telefono" class="inp mono" placeholder="Teléfono" aria-label="Teléfono" />
+            <input type="hidden" name="NuevoContacto.RecibeAvisos" value="true" />
+            <button type="submit" class="btn">@Iconos.Svg("plus", "s")Agregar contacto</button>
+        </form>
+    }
+</section>
+@if (p.CrearContratos)
+{
+    <section class="card espacio">
+        <div class="hd"><h3>Estado del inquilino</h3></div>
+        <div class="bd row sp">
+            <span class="muted">@(i.Estado == "Activo" ? "Un inquilino inactivo no aparece al crear contratos. Solo se desactiva si no tiene contratos vigentes." : "Está inactivo: actívalo para hacerle un contrato nuevo.")</span>
+            <form method="post" asp-action="Estado" asp-route-id="@i.Id">
+                <input type="hidden" name="estado" value="@(i.Estado == "Activo" ? "Inactivo" : "Activo")" />
+                <button type="submit" class="btn">@(i.Estado == "Activo" ? "Desactivar" : "Activar")</button>
+            </form>
+        </div>
+    </section>
+}

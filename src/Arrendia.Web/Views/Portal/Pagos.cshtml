@@ -1,0 +1,24 @@
+@model IReadOnlyList<Arrendia.Web.Data.PagoFila>
+@{
+    ViewData["Title"] = "Mis pagos";
+    Layout = "_LayoutPortal";
+}
+<div class="col encabezado"><h2>Mis pagos</h2><p class="muted">Descarga el comprobante de cada pago.</p></div>
+<section class="card">
+    @if (Model.Count == 0)
+    {
+        <div class="vacio">@Iconos.Svg("coin", "xl")<b>Todavía no hay pagos</b></div>
+    }
+    else
+    {
+        <ul class="lista">
+            @foreach (var p in Model)
+            {
+                <li class="@(p.Estado == "Anulado" ? "apagada" : "")">
+                    <span><b class="mono">@p.Numero</b> · @Formato.Dinero(p.Monto)<small class="muted bloque">@Formato.Fecha(p.FechaLocal) · @p.Metodo · @p.Contrato</small></span>
+                    <span class="row">@if (p.Estado == "Anulado") { <span class="chip bad">Anulado</span> }<a class="btn sm" href="/portal/pagos/@p.PagoId/comprobante">Comprobante</a></span>
+                </li>
+            }
+        </ul>
+    }
+</section>

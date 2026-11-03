@@ -1,0 +1,16 @@
+@model SimuladorModelo
+@{
+    ViewData["Title"] = "Simulador de pago";
+    Layout = "_LayoutPortal";
+}
+<div class="aviso info">@Iconos.Svg("alert", "s")<span>Modo de desarrollo: esta página reemplaza a Wompi para probar el flujo. Envía el mismo aviso firmado que mandaría la pasarela.</span></div>
+<section class="card espacio">
+    <div class="bd col">
+        <h2>Pagar @Formato.Dinero(Model.Intencion.Monto)</h2>
+        <span class="muted mono">Referencia @Model.Intencion.Referencia</span>
+        <div class="row">
+            <form method="post"><input type="hidden" name="aprobar" value="true" /><button type="submit" class="btn pri">Aprobar pago</button></form>
+            <form method="post"><input type="hidden" name="aprobar" value="false" /><button type="submit" class="btn">Rechazar pago</button></form>
+        </div>
+    </div>
+</section>

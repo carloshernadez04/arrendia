@@ -81,15 +81,15 @@ jobs:
     steps:
       - uses: actions/checkout@v7
 
-      - name: QA no puede usar llaves de pago reales
+      - name: QA no puede aceptar pagos reales
         env:
           DOTENV: ${{ secrets.DOTENV }}
         run: |
-          if printf '%s' "$DOTENV" | grep -qE '(pub|prv)_prod_'; then
-            echo "::error::El .env de QA contiene llaves de producción de la pasarela de pago."
+          if printf '%s' "$DOTENV" | grep -qiE '^Wompi__PermitirProductivo=true'; then
+            echo "::error::El .env de QA permite pagos productivos de Wompi."
             exit 1
           fi
-          echo "Sin llaves de producción en QA."
+          echo "QA solo acepta pagos de prueba."
 
       - name: Verificar que la base de QA tenga los objetos requeridos
         run: deploy/scripts/verificar-bd.sh ArrendiaQA

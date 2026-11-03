@@ -1,0 +1,31 @@
+@model DocumentosPortalModelo
+@{
+    ViewData["Title"] = "Documentos";
+    Layout = "_LayoutPortal";
+}
+<div class="col encabezado"><h2>Documentos</h2><p class="muted">Tus contratos, comprobantes, avisos y estados de cuenta. Cada uno tiene un código QR para verificarlo.</p></div>
+<section class="card">
+    <div class="hd"><h3>Estado de cuenta</h3></div>
+    <ul class="lista">
+        @foreach (var c in Model.Contratos)
+        {
+            <li><span class="mono">@c.Numero · @c.Unidad</span><a class="btn sm" href="/portal/contratos/@c.ContratoId/estado-cuenta">Ver y descargar</a></li>
+        }
+    </ul>
+</section>
+<section class="card espacio">
+    <div class="hd"><h3>Documentos emitidos</h3></div>
+    @if (Model.Documentos.Count == 0)
+    {
+        <div class="vacio"><span>Todavía no hay documentos.</span></div>
+    }
+    else
+    {
+        <ul class="lista">
+            @foreach (var d in Model.Documentos)
+            {
+                <li><span>@Estados.Texto(d.Tipo) <b class="mono">@d.Folio</b><small class="muted bloque">@Formato.FechaHora(d.FechaCreacion)@(d.Pago is null ? "" : $" · {d.Pago}")</small></span><a class="btn sm" href="/documentos/@d.Id/pdf">Descargar</a></li>
+            }
+        </ul>
+    }
+</section>

@@ -1,0 +1,63 @@
+@model CargosModelo
+@using Arrendia.Web.Controllers
+@{
+    ViewData["Title"] = "Cargos";
+    var f = Model.Filtro;
+    var pendiente = Model.Cargos.Where(c => c.Saldo > 0 && c.Estado is "Pendiente" or "Parcial").Sum(c => c.Saldo);
+}
+<partial name="_Avisos" />
+<div class="ph">
+    <div>
+        <h2>Cargos</h2>
+        <p class="muted">@Model.Cargos.Count cargos · @Formato.Dinero(pendiente) pendiente en esta lista</p>
+    </div>
+    @if (Model.Permisos.CargosManuales)
+    {
+        <a class="btn pri" href="/cargos/nuevo@(f.ContratoId is null ? "" : $"?contrato={f.ContratoId}")">@Iconos.Svg("plus", "s")Cargo manual</a>
+    }
+</div>
+<form method="get" class="toolbar" role="search">
+    @if (f.ContratoId is not null) { <input type="hidden" name="contrato" value="@f.ContratoId" /> }
+    <div class="buscar">@Iconos.Svg("search", "s")<input name="buscar" class="inp" value="@f.Buscar" placeholder="Descripción, contrato, inquilino o unidad" aria-label="Buscar" /></div>
+    <select name="situacion" class="sel" aria-label="Situación">
+        <option value="">Todas las situaciones</option>
+        @foreach (var s in CargosController.Situaciones) { <option value="@s" selected="@(s == f.Situacion)">@s</option> }
+    </select>
+    <select name="origen" class="sel" aria-label="Origen">
+        <option value="">Todos los orígenes</option>
+        @foreach (var o in CargosController.Origenes) { <option value="@o" selected="@(o == f.Origen)">@Estados.Texto(o)</option> }
+    </select>
+    <select name="propiedad" class="sel" aria-label="Propiedad">
+        <option value="">Todas las propiedades</option>
+        @foreach (var p in Model.Propiedades) { <option value="@p.Id" selected="@(p.Id == f.PropiedadId)">@p.Nombre</option> }
+    </select>
+    <button type="submit" class="btn">Filtrar</button>
+    @if (f.ContratoId is not null) { <a class="btn ghost" href="/cargos">Quitar filtro de contrato</a> }
+</form>
+<section class="card">
+    @if (Model.Cargos.Count == 0)
+    {
+        <div class="vacio">@Iconos.Svg("receipt", "xl")<b>No hay cargos con este filtro</b><span>La renta de los contratos activos se genera sola cada mes.</span></div>
+    }
+    else
+    {
+        <div class="tw">
+            <table class="tbl">
+                <thead><tr><th>Cargo</th><th>Contrato</th><th>Vence</th><th class="r">Monto</th><th class="r">Saldo</th><th>Situación</th></tr></thead>
+                <tbody>
+                    @foreach (var k in Model.Cargos)
+                    {
+                        <tr>
+                            <td data-l="Cargo"><a class="enlace-fila" asp-action="Detalle" asp-route-id="@k.CargoId">@k.Descripcion</a><small class="muted bloque">@Estados.Texto(k.Origen) · #@k.CargoId</small></td>
+                            <td data-l="Contrato"><a class="mono" href="/contratos/@k.ContratoId">@k.Contrato</a><small class="muted bloque">@k.Inquilino · @k.Unidad</small></td>
+                            <td data-l="Vence">@Formato.Fecha(k.FechaVencimiento)@if (k.DiasAtraso > 0) { <small class="bloque malo">@k.DiasAtraso días de atraso</small> }</td>
+                            <td data-l="Monto" class="r num">@Formato.Dinero(k.Monto)</td>
+                            <td data-l="Saldo" class="r num">@Formato.Dinero(k.Saldo)</td>
+                            <td data-l="Situación"><span class="chip @Estados.Clase(k.Situacion)">@k.Situacion</span></td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+</section>

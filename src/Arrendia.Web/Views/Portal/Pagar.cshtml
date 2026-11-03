@@ -1,0 +1,63 @@
+@model PagarModelo
+@using System.Globalization
+@{
+    ViewData["Title"] = "Pagar";
+    Layout = "_LayoutPortal";
+    var deuda = Model.Pendientes.Sum(c => c.Saldo);
+}
+<div class="col encabezado">
+    <h2>Pagar con tarjeta</h2>
+    <p class="muted">Elige qué cargos pagas o escribe el monto. Se aplica primero a lo más antiguo. No puedes pagar más de lo que debes.</p>
+</div>
+@if (!Model.Disponible)
+{
+    <div class="aviso error">@Iconos.Svg("alert", "s")<span>El pago en línea todavía no está disponible. Paga en efectivo o transferencia con la administración.</span></div>
+}
+@if (Model.Contratos.Count > 1)
+{
+    <form method="get" class="toolbar">
+        <select name="contrato" class="sel" aria-label="Contrato">
+            @foreach (var c in Model.Contratos) { <option value="@c.ContratoId" selected="@(c.ContratoId == Model.ContratoId)">@c.Numero · @c.Unidad</option> }
+        </select>
+        <button type="submit" class="btn">Ver</button>
+    </form>
+}
+@if (Model.Error is not null)
+{
+    <div class="aviso error" role="alert">@Iconos.Svg("alert", "s")<span>@Model.Error</span></div>
+}
+@if (Model.ContratoId is null || Model.Pendientes.Count == 0)
+{
+    <section class="card"><div class="vacio">@Iconos.Svg("check", "xl")<b>No tienes nada pendiente en este contrato</b></div></section>
+}
+else if (Model.Disponible)
+{
+    <form method="post" class="card formulario" data-formulario data-total-cargos>
+        <input type="hidden" name="contrato" value="@Model.ContratoId" />
+        <div class="campos">
+            <fieldset class="fld ancho">
+                <legend class="etiqueta">Cargos pendientes · total @Formato.Dinero(deuda)</legend>
+                <div class="lista-cargos">
+                    @foreach (var c in Model.Pendientes)
+                    {
+                        <label class="chk cargo">
+                            <input type="checkbox" name="cargos" value="@c.CargoId" data-saldo="@c.Saldo.ToString("0.00", CultureInfo.InvariantCulture)" checked="@Model.Cargos.Contains(c.CargoId)" />
+                            <span class="grow">@c.Descripcion<small class="muted bloque">Vence @Formato.Fecha(c.FechaVencimiento)</small></span>
+                            <b class="num">@Formato.Dinero(c.Saldo)</b>
+                        </label>
+                    }
+                </div>
+                <span class="hint" data-resumen-cargos></span>
+                @if (!Model.PermiteParciales) { <span class="chip warn">Tu contrato no permite pagos parciales: elige cargos completos.</span> }
+            </fieldset>
+            <div class="fld ancho">
+                <label for="monto">Monto a pagar</label>
+                <div class="pre"><span>$</span><input id="monto" name="monto" type="number" step="0.01" min="0.01" max="@deuda.ToString("0.00", CultureInfo.InvariantCulture)" class="inp num" value="@((Model.Monto ?? deuda).ToString("0.00", CultureInfo.InvariantCulture))" inputmode="decimal" required data-monto /></div>
+            </div>
+        </div>
+        <div class="pie">
+            <span class="hint">Te llevamos a la página segura de Wompi. El pago se confirma cuando Wompi nos avisa.</span>
+            <button type="submit" class="btn pri">Continuar al pago</button>
+        </div>
+    </form>
+}

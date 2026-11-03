@@ -1,0 +1,57 @@
+@model ContratosModelo
+@using Arrendia.Web.Controllers
+@{
+    ViewData["Title"] = "Contratos";
+    var f = Model.Filtro;
+}
+<partial name="_Avisos" />
+<div class="ph">
+    <div>
+        <h2>Contratos</h2>
+        <p class="muted">@Model.Contratos.Count @(Model.Contratos.Count == 1 ? "contrato" : "contratos")</p>
+    </div>
+    @if (Model.Permisos.CrearContratos)
+    {
+        <a class="btn pri" asp-action="Nuevo">@Iconos.Svg("plus", "s")Nuevo contrato</a>
+    }
+</div>
+<form method="get" class="toolbar" role="search">
+    <div class="buscar">@Iconos.Svg("search", "s")<input name="buscar" class="inp" value="@f.Buscar" placeholder="Número, inquilino o unidad" aria-label="Buscar" /></div>
+    <select name="propiedad" class="sel" aria-label="Propiedad">
+        <option value="">Todas las propiedades</option>
+        @foreach (var p in Model.Propiedades) { <option value="@p.Id" selected="@(p.Id == f.PropiedadId)">@p.Nombre</option> }
+    </select>
+    <select name="estado" class="sel" aria-label="Estado">
+        <option value="">Todos los estados</option>
+        @foreach (var e in ContratosController.EstadosContrato) { <option value="@e" selected="@(e == f.Estado)">@Estados.Texto(e)</option> }
+    </select>
+    <button type="submit" class="btn">Filtrar</button>
+</form>
+<section class="card">
+    @if (Model.Contratos.Count == 0)
+    {
+        <div class="vacio">@Iconos.Svg("file", "xl")<b>No hay contratos</b><span>Crea uno para una unidad disponible y un inquilino registrado.</span></div>
+    }
+    else
+    {
+        <div class="tw">
+            <table class="tbl">
+                <thead><tr><th>Contrato</th><th>Inquilino</th><th>Unidad</th><th>Vigencia</th><th class="r">Renta</th><th class="r">Deuda</th><th>Estado</th></tr></thead>
+                <tbody>
+                    @foreach (var c in Model.Contratos)
+                    {
+                        <tr>
+                            <td data-l="Contrato"><a class="mono enlace-fila" asp-action="Detalle" asp-route-id="@c.ContratoId">@c.Numero</a></td>
+                            <td data-l="Inquilino">@c.Inquilino</td>
+                            <td data-l="Unidad">@c.Unidad<small class="muted bloque">@c.Propiedad</small></td>
+                            <td data-l="Vigencia">@Formato.Fecha(c.FechaInicio) – @Formato.Fecha(c.FechaFin)</td>
+                            <td data-l="Renta" class="r num">@Formato.Dinero(c.RentaVigente)</td>
+                            <td data-l="Deuda" class="r num">@Formato.Dinero(c.DeudaTotal)@if (c.DeudaVencida > 0) { <small class="bloque malo">@Formato.Dinero(c.DeudaVencida) vencido</small> }</td>
+                            <td data-l="Estado"><span class="chip @Estados.Clase(c.Estado)">@Estados.Texto(c.Estado)</span></td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+</section>

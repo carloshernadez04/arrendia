@@ -1,0 +1,63 @@
+@model PagosModelo
+@using Arrendia.Web.Controllers
+@{
+    ViewData["Title"] = "Pagos";
+    var f = Model.Filtro;
+}
+<partial name="_Avisos" />
+<div class="ph">
+    <div>
+        <h2>Pagos</h2>
+        <p class="muted">@Model.Pagos.Count pagos · @Formato.Dinero(Model.Total) aplicados en esta lista</p>
+    </div>
+    @if (Model.Permisos.RegistrarPagos)
+    {
+        <a class="btn pri" asp-action="Nuevo">@Iconos.Svg("plus", "s")Registrar pago</a>
+    }
+</div>
+<form method="get" class="toolbar" role="search">
+    <div class="buscar">@Iconos.Svg("search", "s")<input name="buscar" class="inp" value="@f.Buscar" placeholder="Número, contrato, inquilino o referencia" aria-label="Buscar" /></div>
+    <select name="metodo" class="sel" aria-label="Método">
+        <option value="">Todos los métodos</option>
+        @foreach (var m in PagosController.Metodos) { <option value="@m" selected="@(m == f.Metodo)">@m</option> }
+    </select>
+    <select name="estado" class="sel" aria-label="Estado">
+        <option value="">Todos</option>
+        <option value="Aplicado" selected="@(f.Estado == "Aplicado")">Aplicados</option>
+        <option value="Anulado" selected="@(f.Estado == "Anulado")">Anulados</option>
+    </select>
+    <select name="propiedad" class="sel" aria-label="Propiedad">
+        <option value="">Todas las propiedades</option>
+        @foreach (var p in Model.Propiedades) { <option value="@p.Id" selected="@(p.Id == f.PropiedadId)">@p.Nombre</option> }
+    </select>
+    <input name="desde" type="date" class="inp corto" value="@f.Desde?.ToString("yyyy-MM-dd")" aria-label="Desde" />
+    <input name="hasta" type="date" class="inp corto" value="@f.Hasta?.ToString("yyyy-MM-dd")" aria-label="Hasta" />
+    <button type="submit" class="btn">Filtrar</button>
+</form>
+<section class="card">
+    @if (Model.Pagos.Count == 0)
+    {
+        <div class="vacio">@Iconos.Svg("coin", "xl")<b>No hay pagos con este filtro</b><span>Registra pagos en efectivo o transferencia; los de tarjeta llegan solos desde el portal.</span></div>
+    }
+    else
+    {
+        <div class="tw">
+            <table class="tbl">
+                <thead><tr><th>Pago</th><th>Fecha</th><th>Contrato</th><th>Método</th><th class="r">Monto</th><th>Estado</th></tr></thead>
+                <tbody>
+                    @foreach (var g in Model.Pagos)
+                    {
+                        <tr class="@(g.Estado == "Anulado" ? "apagada" : "")">
+                            <td data-l="Pago"><a class="mono enlace-fila" asp-action="Detalle" asp-route-id="@g.PagoId">@g.Numero</a></td>
+                            <td data-l="Fecha">@Formato.Fecha(g.FechaLocal)</td>
+                            <td data-l="Contrato"><a class="mono" href="/contratos/@g.ContratoId">@g.Contrato</a><small class="muted bloque">@g.Inquilino · @g.Unidad</small></td>
+                            <td data-l="Método">@g.Metodo<small class="muted bloque">@g.Referencia</small></td>
+                            <td data-l="Monto" class="r num">@Formato.Dinero(g.Monto)</td>
+                            <td data-l="Estado"><span class="chip @Estados.Clase(g.Estado)">@g.Estado</span></td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+</section>

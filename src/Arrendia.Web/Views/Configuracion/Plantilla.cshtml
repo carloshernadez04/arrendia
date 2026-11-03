@@ -1,0 +1,72 @@
+@model Arrendia.Web.Data.Plantilla
+@{
+    var nueva = Model.Id == 0;
+    ViewData["Title"] = nueva ? "Nueva plantilla" : "Editar plantilla";
+}
+<div class="ph">
+    <div>
+        <h2>@ViewData["Title"]</h2>
+        <p class="muted">Condiciones de cobro que se copian a cada contrato nuevo.</p>
+    </div>
+</div>
+<form method="post" asp-action="GuardarPlantilla" class="card formulario" novalidate data-formulario>
+    <div asp-validation-summary="All" class="aviso error"></div>
+    <input type="hidden" asp-for="Id" />
+    <input type="hidden" asp-for="EsPredeterminada" />
+    <div class="campos">
+        <div class="fld ancho">
+            <label asp-for="Nombre">Nombre</label>
+            <input asp-for="Nombre" class="inp" maxlength="80" />
+        </div>
+        <div class="fld">
+            <label asp-for="DiaPago">Día de pago</label>
+            <input asp-for="DiaPago" type="number" min="1" max="31" class="inp num" />
+            <span class="hint">Si el mes no tiene ese día, vence el último día del mes.</span>
+        </div>
+        <div class="fld">
+            <label asp-for="DiasEmisionAviso">Días de anticipación del aviso</label>
+            <input asp-for="DiasEmisionAviso" type="number" min="0" max="45" class="inp num" />
+            <span class="hint">El cargo y su aviso salen estos días antes del vencimiento.</span>
+        </div>
+        <div class="fld ancho">
+            <label class="chk"><input asp-for="AplicaMora" /> <span>Cobrar mora por atraso</span></label>
+        </div>
+        <div class="fld">
+            <label asp-for="DiasGracia">Días de gracia</label>
+            <input asp-for="DiasGracia" type="number" min="0" max="60" class="inp num" />
+        </div>
+        <div class="fld">
+            <label asp-for="PorcentajeMoraDiario">Mora diaria (%)</label>
+            <input asp-for="PorcentajeMoraDiario" type="number" min="0" max="5" step="0.0001" class="inp num" />
+            <span class="hint">Sobre el saldo vencido, por cada día después de la gracia.</span>
+        </div>
+        <div class="fld">
+            <label asp-for="TipoTopeMora">Tope de mora</label>
+            <select asp-for="TipoTopeMora" class="sel">
+                <option value="Ninguno">Sin tope</option>
+                <option value="Monto">Monto fijo por cargo</option>
+                <option value="PorcentajeCargo">Porcentaje del cargo</option>
+            </select>
+        </div>
+        <div class="fld">
+            <label asp-for="ValorTopeMora">Valor del tope</label>
+            <input asp-for="ValorTopeMora" type="number" min="0" step="0.01" class="inp num" />
+        </div>
+        <div class="fld ancho">
+            <label class="chk"><input asp-for="PermitePagosParciales" /> <span>Permitir pagos parciales</span></label>
+            <label class="chk"><input asp-for="CorrerVencimientoFeriado" /> <span>Si vence en domingo o feriado, pasar al siguiente día hábil</span></label>
+            @if (!Model.EsPredeterminada)
+            {
+                <label class="chk"><input asp-for="Activo" /> <span>Activa (disponible al crear contratos)</span></label>
+            }
+            else
+            {
+                <input type="hidden" asp-for="Activo" />
+            }
+        </div>
+    </div>
+    <div class="pie">
+        <a class="btn" asp-action="Index" asp-route-seccion="plantillas">Cancelar</a>
+        <button type="submit" class="btn pri">Guardar plantilla</button>
+    </div>
+</form>

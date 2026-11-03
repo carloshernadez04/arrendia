@@ -9,12 +9,14 @@ services:
     env_file: .env
     environment:
       DataProtection__Ruta: /claves
+      Archivos__RutaLocal: /archivos
     volumes:
       - claves:/claves                 # claves que firman las sesiones: sobreviven a cada despliegue
+      - archivos:/archivos             # archivos subidos cuando no hay Cloudinary configurado
     ports:
       - "127.0.0.1:${APP_PORT}:8080"   # solo accesible por Cloudflare Tunnel, no desde la red
     networks: [arrendia-net]
-    mem_limit: 350m
+    mem_limit: 512m
     read_only: true
     tmpfs:
       - /tmp
@@ -25,6 +27,7 @@ services:
 
 volumes:
   claves:
+  archivos:
 
 networks:
   arrendia-net:

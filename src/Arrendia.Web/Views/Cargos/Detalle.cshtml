@@ -1,0 +1,92 @@
+@model CargoDetalleModelo
+@{
+    var k = Model.Cargo;
+    var p = Model.Permisos;
+    ViewData["Title"] = k.Descripcion;
+    var conSaldo = k.Saldo > 0 && k.Estado is "Pendiente" or "Parcial";
+}
+<partial name="_Avisos" />
+<div class="ph">
+    <div>
+        <h2>@k.Descripcion <span class="chip @Estados.Clase(k.Situacion)">@k.Situacion</span></h2>
+        <p class="muted">Cargo #@k.CargoId · <a class="mono" href="/contratos/@k.ContratoId">@k.Contrato</a> · @k.Inquilino · @k.Unidad</p>
+    </div>
+    <div class="row">
+        <a class="btn" href="/cargos?contrato=@k.ContratoId">@Iconos.Svg("chevL", "s")Cargos del contrato</a>
+        <a class="btn" asp-action="Aviso" asp-route-id="@k.CargoId">@Iconos.Svg("file", "s")Aviso de cobro</a>
+        @if (conSaldo && p.RegistrarPagos)
+        {
+            <a class="btn pri" href="/pagos/nuevo?contrato=@k.ContratoId">@Iconos.Svg("coin", "s")Registrar pago</a>
+        }
+    </div>
+</div>
+<div class="grid">
+    <section class="card c8">
+        <div class="hd"><h3>Detalle</h3></div>
+        <div class="bd">
+            <dl class="kv">
+                <dt>Concepto</dt><dd>@k.Concepto · @Estados.Texto(k.Origen)</dd>
+                @if (k.Periodo is not null) { <dt>Periodo</dt><dd>@Formato.Periodo(k.Periodo)</dd> }
+                <dt>Emitido</dt><dd>@Formato.Fecha(k.FechaEmision)</dd>
+                <dt>Vence</dt><dd>@Formato.Fecha(k.FechaVencimiento)@if (k.DiasAtraso > 0) { <span class="chip bad">@k.DiasAtraso días de atraso</span> }</dd>
+                <dt>Monto</dt><dd class="num">@Formato.Dinero(k.MontoBase)</dd>
+                <dt>IVA</dt><dd class="num">@Formato.Dinero(k.MontoIva)</dd>
+                <dt>Total</dt><dd class="num"><b>@Formato.Dinero(k.Monto)</b></dd>
+                @if (Model.ArchivoRespaldoId is not null) { <dt>Respaldo</dt><dd><a href="/archivos/@Model.ArchivoRespaldoId" target="_blank" rel="noopener">Ver archivo</a></dd> }
+            </dl>
+        </div>
+    </section>
+    <section class="card c4">
+        <div class="hd"><h3>Saldo</h3></div>
+        <div class="bd col">
+            <div class="cifra"><span class="muted">Pendiente</span><b class="num grande">@Formato.Dinero(k.Saldo)</b></div>
+            <progress class="barra" value="@(k.Monto == 0 ? 0 : (int)(100 * (k.Monto - k.Saldo) / k.Monto))" max="100"></progress>
+            <span class="muted">@Formato.Dinero(k.Monto - k.Saldo) cubierto entre pagos y ajustes</span>
+        </div>
+    </section>
+</div>
+@if (Model.Aplicaciones.Count > 0)
+{
+    <section class="card espacio">
+        <div class="hd"><h3>Pagos aplicados</h3></div>
+        <ul class="lista">
+            @foreach (var a in Model.Aplicaciones)
+            {
+                <li class="@(a.Revertida ? "apagada" : "")"><span><a class="mono" href="/pagos/@a.PagoId">@a.Pago</a> · @Formato.Fecha(a.Fecha) @if (a.Revertida) { <span class="chip">Pago anulado</span> }</span><b class="num">@Formato.Dinero(a.MontoAplicado)</b></li>
+            }
+        </ul>
+    </section>
+}
+@if (Model.Ajustes.Count > 0)
+{
+    <section class="card espacio">
+        <div class="hd"><h3>Ajustes</h3></div>
+        <ul class="lista">
+            @foreach (var a in Model.Ajustes)
+            {
+                <li><span><b>@Estados.Texto(a.Tipo)</b> · @a.Motivo <small class="muted">@a.Autorizo, @Formato.FechaHora(a.FechaCreacion)</small></span><b class="num">@Formato.Dinero(a.Monto)</b></li>
+            }
+        </ul>
+    </section>
+}
+@if (conSaldo && p.Condonar)
+{
+    <section class="card espacio">
+        <div class="hd"><h3>Condonar</h3><span class="muted">Perdona parte o todo el saldo; queda registrado</span></div>
+        <form method="post" asp-action="Condonar" asp-route-id="@k.CargoId" class="bd linea-form" data-formulario>
+            <div class="pre"><span>$</span><input name="monto" type="number" step="0.01" min="0.01" max="@k.Saldo.ToString("0.00", System.Globalization.CultureInfo.InvariantCulture)" class="inp num" value="@k.Saldo.ToString("0.00", System.Globalization.CultureInfo.InvariantCulture)" aria-label="Monto" required /></div>
+            <input name="motivo" class="inp" placeholder="Motivo" aria-label="Motivo" maxlength="500" required />
+            <button type="submit" class="btn">Condonar</button>
+        </form>
+    </section>
+}
+@if (p.EsAdministrador && k.Estado != "Anulado")
+{
+    <section class="card espacio peligro">
+        <div class="hd"><h3>Anular cargo</h3><span class="muted">Solo si se emitió por error y no tiene pagos</span></div>
+        <form method="post" asp-action="Anular" asp-route-id="@k.CargoId" class="bd linea-form" data-formulario>
+            <input name="motivo" class="inp" placeholder="Motivo de la anulación" aria-label="Motivo" maxlength="500" required />
+            <button type="submit" class="btn">Anular</button>
+        </form>
+    </section>
+}

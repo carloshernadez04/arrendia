@@ -1,0 +1,61 @@
+@model ReportesModelo
+@using Arrendia.Web.Controllers
+@{
+    ViewData["Title"] = "Reportes de mantenimiento";
+    var f = Model.Filtro;
+}
+<partial name="_Avisos" />
+<div class="ph">
+    <div>
+        <h2>Reportes de mantenimiento</h2>
+        <p class="muted">@Model.Reportes.Count reportes</p>
+    </div>
+    <div class="row">
+        <a class="btn" href="/tecnicos">@Iconos.Svg("users", "s")Técnicos</a>
+        <a class="btn pri" asp-action="Nuevo">@Iconos.Svg("plus", "s")Nuevo reporte</a>
+    </div>
+</div>
+<form method="get" class="toolbar" role="search">
+    <div class="buscar">@Iconos.Svg("search", "s")<input name="buscar" class="inp" value="@f.Buscar" placeholder="Número, título, unidad o técnico" aria-label="Buscar" /></div>
+    <select name="estado" class="sel" aria-label="Estado">
+        <option value="">Todos los estados</option>
+        @foreach (var e in ReportesController.EstadosReporte) { <option value="@e" selected="@(e == f.Estado)">@(e == "Pendientes" ? "Sin cerrar" : e)</option> }
+    </select>
+    <select name="prioridad" class="sel" aria-label="Prioridad">
+        <option value="">Todas las prioridades</option>
+        @foreach (var p in Prioridades.Todas) { <option value="@p" selected="@(p == f.Prioridad)">@p</option> }
+    </select>
+    <select name="propiedad" class="sel" aria-label="Propiedad">
+        <option value="">Todas las propiedades</option>
+        @foreach (var p in Model.Propiedades) { <option value="@p.Id" selected="@(p.Id == f.PropiedadId)">@p.Nombre</option> }
+    </select>
+    <button type="submit" class="btn">Filtrar</button>
+</form>
+<section class="card">
+    @if (Model.Reportes.Count == 0)
+    {
+        <div class="vacio">@Iconos.Svg("wrench", "xl")<b>No hay reportes con este filtro</b><span>Los inquilinos también pueden reportar problemas desde su portal.</span></div>
+    }
+    else
+    {
+        <div class="tw">
+            <table class="tbl">
+                <thead><tr><th>Reporte</th><th>Lugar</th><th>Categoría</th><th>Técnico</th><th class="r">Días</th><th>Prioridad</th><th>Estado</th></tr></thead>
+                <tbody>
+                    @foreach (var r in Model.Reportes)
+                    {
+                        <tr>
+                            <td data-l="Reporte"><a class="enlace-fila" asp-action="Detalle" asp-route-id="@r.ReporteId">@r.Titulo</a><small class="muted bloque mono">@r.Numero</small></td>
+                            <td data-l="Lugar">@r.Ubicacion<small class="muted bloque">@r.Propiedad</small></td>
+                            <td data-l="Categoría">@r.Categoria</td>
+                            <td data-l="Técnico">@(r.Tecnico ?? "—")</td>
+                            <td data-l="Días" class="r num">@r.DiasAbierto</td>
+                            <td data-l="Prioridad"><span class="chip @Estados.Clase(r.Prioridad)">@r.Prioridad</span></td>
+                            <td data-l="Estado"><span class="chip @Estados.Clase(r.Estado)">@r.Estado</span></td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+</section>

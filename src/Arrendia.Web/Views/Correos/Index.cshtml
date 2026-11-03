@@ -1,0 +1,62 @@
+@model CorreosModelo
+@using Arrendia.Web.Controllers
+@{
+    ViewData["Title"] = "Correos enviados";
+    var f = Model.Filtro;
+}
+<partial name="_Avisos" />
+<div class="ph">
+    <div>
+        <h2>Correos enviados</h2>
+        <p class="muted">Avisos de cobro, comprobantes, invitaciones y enlaces. Los avisos y comprobantes se envían solos cada minuto.</p>
+    </div>
+</div>
+@if (!Model.ServidorListo)
+{
+    <div class="aviso error">@Iconos.Svg("alert", "s")<span>No hay un servidor de correo configurado: los correos quedan en cola hasta que se configure.</span></div>
+}
+<form method="get" class="toolbar" role="search">
+    <div class="buscar">@Iconos.Svg("search", "s")<input name="buscar" class="inp" value="@f.Buscar" placeholder="Destinatario o asunto" aria-label="Buscar" /></div>
+    <select name="tipo" class="sel" aria-label="Tipo">
+        <option value="">Todos los tipos</option>
+        @foreach (var t in CorreosController.Tipos) { <option value="@t" selected="@(t == f.Tipo)">@Estados.Texto(t)</option> }
+    </select>
+    <select name="estado" class="sel" aria-label="Estado">
+        <option value="">Todos los estados</option>
+        @foreach (var e in new[] { "Pendiente", "Enviado", "Fallido" }) { <option value="@e" selected="@(e == f.Estado)">@e</option> }
+    </select>
+    <button type="submit" class="btn">Filtrar</button>
+</form>
+<section class="card">
+    @if (Model.Filas.Count == 0)
+    {
+        <div class="vacio">@Iconos.Svg("mail", "xl")<b>No hay correos con este filtro</b></div>
+    }
+    else
+    {
+        <div class="tw">
+            <table class="tbl">
+                <thead><tr><th>Correo</th><th>Tipo</th><th>Creado</th><th>Enviado</th><th>Estado</th><th></th></tr></thead>
+                <tbody>
+                    @foreach (var c in Model.Filas)
+                    {
+                        <tr>
+                            <td data-l="Correo">@c.Asunto<small class="muted bloque">@c.Destinatario@(c.Contrato is null ? "" : $" · {c.Contrato}")</small></td>
+                            <td data-l="Tipo">@Estados.Texto(c.Tipo)</td>
+                            <td data-l="Creado">@Formato.FechaHora(c.FechaCreacion)</td>
+                            <td data-l="Enviado">@Formato.FechaHora(c.FechaEnvio)</td>
+                            <td data-l="Estado"><span class="chip @Estados.Clase(c.Estado)">@c.Estado</span>@if (c.Error is not null) { <small class="bloque malo">@c.Error</small> }</td>
+                            <td>
+                                @if (c.Estado == "Fallido" && c.Tipo is "AvisoCobro" or "Comprobante")
+                                {
+                                    <form method="post" asp-action="Reintentar" asp-route-id="@c.Id"><button type="submit" class="btn sm">Reintentar</button></form>
+                                }
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+    <partial name="_Paginacion" model="Model.Paginacion" />
+</section>

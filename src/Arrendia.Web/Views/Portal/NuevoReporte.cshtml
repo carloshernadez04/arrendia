@@ -1,0 +1,42 @@
+@model ReportePortalFormulario
+@{
+    ViewData["Title"] = "Reportar un problema";
+    Layout = "_LayoutPortal";
+}
+<div class="col encabezado"><h2>Reportar un problema</h2><p class="muted">Te daremos un PIN: dáselo al técnico solo cuando termine el trabajo.</p></div>
+@if (Model.Error is not null)
+{
+    <div class="aviso error" role="alert">@Iconos.Svg("alert", "s")<span>@Model.Error</span></div>
+}
+@if (Model.Unidades.Count == 0)
+{
+    <section class="card"><div class="vacio"><span>No tienes un contrato activo para reportar problemas.</span></div></section>
+}
+else
+{
+    <form method="post" enctype="multipart/form-data" class="card formulario" data-formulario>
+        <div class="campos">
+            <div class="fld ancho">
+                <label for="UnidadId">Unidad</label>
+                <select id="UnidadId" name="UnidadId" class="sel">
+                    @foreach (var u in Model.Unidades) { <option value="@u.UnidadId" selected="@(u.UnidadId == Model.UnidadId)">@u.Unidad · @u.Propiedad</option> }
+                </select>
+            </div>
+            <div class="fld">
+                <label for="CategoriaId">¿Qué tipo de problema es?</label>
+                <select id="CategoriaId" name="CategoriaId" class="sel">
+                    <option value="">Elige una opción</option>
+                    @foreach (var c in Model.Categorias) { <option value="@c.Id" selected="@(c.Id == Model.CategoriaId)">@c.Nombre</option> }
+                </select>
+            </div>
+            <div class="fld">
+                <label for="Prioridad">¿Qué tan urgente es?</label>
+                <select id="Prioridad" name="Prioridad" class="sel">@foreach (var p in Prioridades.Todas) { <option value="@p" selected="@(p == Model.Prioridad)">@p</option> }</select>
+            </div>
+            <div class="fld ancho"><label for="Titulo">Título</label><input id="Titulo" name="Titulo" class="inp" maxlength="120" value="@Model.Titulo" placeholder="Ej. No funciona el aire acondicionado" required /></div>
+            <div class="fld ancho"><label for="Descripcion">Cuéntanos qué pasa</label><textarea id="Descripcion" name="Descripcion" class="txa" rows="4" maxlength="2000" required>@Model.Descripcion</textarea></div>
+            <div class="fld ancho"><label for="Fotos">Fotos (opcional)</label><input id="Fotos" name="Fotos" type="file" accept="image/jpeg,image/png,image/webp" multiple capture="environment" class="inp" /></div>
+        </div>
+        <div class="pie"><a class="btn" href="/portal/reportes">Cancelar</a><button type="submit" class="btn pri">Enviar reporte</button></div>
+    </form>
+}

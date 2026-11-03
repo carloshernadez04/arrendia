@@ -4,5 +4,9 @@
 <link rel="preload" href="~/fonts/ibm-plex-sans.woff2" as="font" type="font/woff2" crossorigin />
 <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
 <link rel="icon" href="~/favicon.ico" />
+@if (TempData["Tema"] is string tema)
+{
+    <meta name="arrendia-tema" content="@tema" />
+}
 <script src="~/js/tema.js" asp-append-version="true"></script>
 <script src="~/js/site.js" asp-append-version="true" defer></script>

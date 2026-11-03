@@ -1,0 +1,82 @@
+@model MiCuentaModelo
+@{
+    ViewData["Title"] = "Mi cuenta";
+    var p = Model.Perfil;
+    if (p.Rol == "Inquilino")
+    {
+        Layout = "_LayoutPortal";
+    }
+}
+<partial name="_Avisos" />
+<div class="ph">
+    <div>
+        <h2>Mi cuenta</h2>
+        <p class="muted">@p.Rol · Último acceso: @Formato.FechaHora(p.UltimoAcceso)</p>
+    </div>
+</div>
+<div class="grid">
+    <section class="card c6">
+        <div class="hd"><h3>Nombre</h3></div>
+        <form method="post" asp-action="Nombre" class="bd col" data-formulario>
+            <input name="nombre" class="inp" value="@p.Nombre" maxlength="120" aria-label="Nombre" required />
+            <div><button type="submit" class="btn">Guardar nombre</button></div>
+        </form>
+    </section>
+    <section class="card c6" id="correo">
+        <div class="hd"><h3>Correo de acceso</h3></div>
+        <form method="post" asp-action="Correo" class="bd col" data-formulario>
+            <span>Ahora entras con <b>@p.Email</b>.</span>
+            @if (p.CorreoPendiente is not null)
+            {
+                <span class="chip warn">Falta confirmar @p.CorreoPendiente</span>
+            }
+            <input name="email" type="email" class="inp" placeholder="Correo nuevo" aria-label="Correo nuevo" required />
+            <span class="hint">Te enviaremos un enlace al correo nuevo. El cambio se aplica cuando lo confirmes.</span>
+            <div><button type="submit" class="btn">Cambiar correo</button></div>
+        </form>
+    </section>
+    <section class="card c6" id="contrasena">
+        <div class="hd"><h3>Contraseña</h3></div>
+        <form method="post" asp-action="Contrasena" class="bd col" data-formulario>
+            <input name="Actual" type="password" class="inp" placeholder="Contraseña actual" autocomplete="current-password" aria-label="Contraseña actual" required />
+            <input name="Contrasena" type="password" class="inp" placeholder="Contraseña nueva" autocomplete="new-password" aria-label="Contraseña nueva" required />
+            <input name="Confirmacion" type="password" class="inp" placeholder="Repite la contraseña nueva" autocomplete="new-password" aria-label="Confirmación" required />
+            <span class="hint">Mínimo 10 caracteres, con letras y números. Al cambiarla se cierran tus otras sesiones.</span>
+            <div><button type="submit" class="btn">Cambiar contraseña</button></div>
+        </form>
+    </section>
+    <section class="card c6">
+        <div class="hd"><h3>Apariencia y sesiones</h3></div>
+        <div class="bd col">
+            <form method="post" asp-action="Tema" class="row">
+                <select name="tema" class="sel" aria-label="Tema">
+                    <option value="Sistema" selected="@(p.TemaPreferido == "Sistema")">Igual que el sistema</option>
+                    <option value="Claro" selected="@(p.TemaPreferido == "Claro")">Claro</option>
+                    <option value="Oscuro" selected="@(p.TemaPreferido == "Oscuro")">Oscuro</option>
+                </select>
+                <button type="submit" class="btn">Guardar tema</button>
+            </form>
+            <form method="post" asp-action="Sesiones" class="col">
+                <span class="muted">¿Entraste desde una computadora prestada? Cierra la sesión en todos los demás dispositivos.</span>
+                <div><button type="submit" class="btn">Cerrar sesión en los demás dispositivos</button></div>
+            </form>
+        </div>
+    </section>
+</div>
+@if (Model.Historial.Count > 0)
+{
+    <section class="card espacio">
+        <div class="hd"><h3>Historial de correos de acceso</h3></div>
+        <div class="tw">
+            <table class="tbl">
+                <thead><tr><th>Fecha</th><th>Correo anterior</th><th>Correo nuevo</th></tr></thead>
+                <tbody>
+                    @foreach (var h in Model.Historial)
+                    {
+                        <tr><td data-l="Fecha">@Formato.FechaHora(h.FechaCreacion)</td><td data-l="Anterior">@h.EmailAnterior</td><td data-l="Nuevo">@h.EmailNuevo</td></tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </section>
+}

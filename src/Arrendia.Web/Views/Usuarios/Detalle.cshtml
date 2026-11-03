@@ -1,0 +1,75 @@
+@model UsuarioDetalleModelo
+@{
+    var u = Model.Usuario;
+    var p = Model.Permisos;
+    ViewData["Title"] = u.Nombre;
+    (string Nombre, bool Valor, string Texto)[] permisos =
+    [
+        ("PuedeCrearContratos", p.PuedeCrearContratos, "Registrar inquilinos y crear contratos"),
+        ("PuedeActivarContratos", p.PuedeActivarContratos, "Activar y finalizar contratos e invitar inquilinos al portal"),
+        ("PuedeCambiarCondiciones", p.PuedeCambiarCondiciones, "Cambiar las condiciones de un contrato"),
+        ("PuedeRegistrarPagos", p.PuedeRegistrarPagos, "Registrar pagos en efectivo o transferencia"),
+        ("PuedeCargosManuales", p.PuedeCargosManuales, "Crear cargos manuales (reparaciones, servicios)"),
+        ("PuedeCondonar", p.PuedeCondonar, "Condonar saldos"),
+        ("PuedeGestionarReportes", p.PuedeGestionarReportes, "Gestionar reportes de mantenimiento y técnicos"),
+    ];
+}
+<partial name="_Avisos" />
+<div class="ph">
+    <div>
+        <h2>@u.Nombre <span class="chip @Estados.Clase(u.Acceso)">@u.Acceso</span></h2>
+        <p class="muted">@u.Rol · @u.Email · Último acceso: @Formato.FechaHora(u.UltimoAcceso)</p>
+    </div>
+    <div class="row">
+        <a class="btn" asp-action="Index">@Iconos.Svg("chevL", "s")Volver</a>
+        @if (u.Acceso is "Invitación enviada" or "Invitación vencida")
+        {
+            <form method="post" asp-action="Reenviar" asp-route-id="@u.Id"><button type="submit" class="btn">Reenviar invitación</button></form>
+            @if (u.Acceso == "Invitación enviada")
+            {
+                <form method="post" asp-action="Revocar" asp-route-id="@u.Id"><button type="submit" class="btn">Revocar invitación</button></form>
+            }
+        }
+        @if (u.Acceso == "Con acceso" && !Model.EsUnoMismo)
+        {
+            <form method="post" asp-action="Activo" asp-route-id="@u.Id"><input type="hidden" name="activo" value="false" /><button type="submit" class="btn">Desactivar cuenta</button></form>
+        }
+        @if (u.Acceso == "Desactivado")
+        {
+            <form method="post" asp-action="Activo" asp-route-id="@u.Id"><input type="hidden" name="activo" value="true" /><button type="submit" class="btn pri">Reactivar cuenta</button></form>
+        }
+    </div>
+</div>
+@if (u.Rol == "Supervisor")
+{
+    <form method="post" asp-action="Permisos" asp-route-id="@u.Id" class="card formulario" data-formulario>
+        <div class="campos">
+            <fieldset class="fld ancho">
+                <legend class="etiqueta">Propiedades que supervisa</legend>
+                <div class="checks">
+                    @foreach (var prop in Model.Opciones)
+                    {
+                        <label class="chk"><input type="checkbox" name="propiedadesAsignadas" value="@prop.Id" checked="@Model.Asignadas.Contains(prop.Id)" /> <span>@prop.Nombre</span></label>
+                    }
+                </div>
+            </fieldset>
+            <fieldset class="fld ancho">
+                <legend class="etiqueta">Qué puede hacer en esas propiedades</legend>
+                <span class="hint">Siempre puede ver propiedades, unidades, contratos, cargos y pagos de sus propiedades.</span>
+                <div class="checks una">
+                    @foreach (var (nombre, valor, texto) in permisos)
+                    {
+                        <label class="chk"><input type="checkbox" name="permisos.@nombre" value="true" checked="@valor" /><input type="hidden" name="permisos.@nombre" value="false" /> <span>@texto</span></label>
+                    }
+                </div>
+            </fieldset>
+        </div>
+        <div class="pie"><button type="submit" class="btn pri">Guardar permisos</button></div>
+    </form>
+}
+else
+{
+    <section class="card">
+        <div class="vacio">@Iconos.Svg("shield", "xl")<b>Administrador</b><span>Tiene acceso completo a todas las propiedades y a la configuración.</span></div>
+    </section>
+}

@@ -1,0 +1,43 @@
+@model TecnicosModelo
+@{
+    ViewData["Title"] = "Técnicos";
+}
+<partial name="_Avisos" />
+<div class="ph">
+    <div>
+        <h2>Técnicos</h2>
+        <p class="muted">Externos, sin cuenta: reciben un enlace temporal para cada trabajo.</p>
+    </div>
+    @if (Model.PuedeEditar)
+    {
+        <a class="btn pri" asp-action="Nuevo">@Iconos.Svg("plus", "s")Nuevo técnico</a>
+    }
+</div>
+<section class="card">
+    @if (Model.Tecnicos.Count == 0)
+    {
+        <div class="vacio">@Iconos.Svg("wrench", "xl")<b>No hay técnicos</b><span>Registra a los fontaneros, electricistas y demás técnicos de confianza.</span></div>
+    }
+    else
+    {
+        <div class="tw">
+            <table class="tbl">
+                <thead><tr><th>Técnico</th><th>Especialidades</th><th>Contacto</th><th class="r">Trabajos</th><th class="r">Horas promedio</th><th>Estado</th><th></th></tr></thead>
+                <tbody>
+                    @foreach (var t in Model.Tecnicos)
+                    {
+                        <tr class="@(t.Activo ? "" : "apagada")">
+                            <td data-l="Técnico"><b>@t.Nombre</b></td>
+                            <td data-l="Especialidades">@(t.Especialidades ?? "—")</td>
+                            <td data-l="Contacto"><a class="mono" href="tel:@t.Telefono">@t.Telefono</a><small class="muted bloque">@t.Email</small></td>
+                            <td data-l="Trabajos" class="r num">@t.Terminados / @t.Reportes</td>
+                            <td data-l="Horas" class="r num">@(t.HorasPromedio?.ToString(System.Globalization.CultureInfo.InvariantCulture) ?? "—")</td>
+                            <td data-l="Estado"><span class="chip @(t.Activo ? "ok" : "")">@(t.Activo ? "Activo" : "Inactivo")</span></td>
+                            <td>@if (Model.PuedeEditar) { <div class="acciones"><a class="btn sm" asp-action="Editar" asp-route-id="@t.Id">Editar</a></div> }</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+</section>

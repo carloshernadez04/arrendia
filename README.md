@@ -73,6 +73,24 @@ Abre el enlace (antepón el dominio si sale solo la ruta), elige la contraseña 
 
 Sin servidor SMTP configurado, en `Development` los correos (por ejemplo, el de recuperar contraseña) se escriben en la consola de la aplicación con su enlace. Para enviar correos reales, configura `Smtp:Host`, `Smtp:Puerto`, `Smtp:Usuario`, `Smtp:Contrasena` y `Smtp:Remitente` con `dotnet user-secrets` (nunca en `appsettings.json`).
 
+### Llaves de los servicios externos
+
+Sin llaves, la aplicación funciona igual en local: los correos se escriben en la consola, los archivos se guardan en `App_Data/archivos` y el pago con tarjeta usa un simulador que envía el mismo aviso firmado que Wompi. En QA y producción se cargan en el secreto `DOTENV` de cada ambiente:
+
+| Variable | Para qué |
+|---|---|
+| `App__UrlPublica` | Dirección pública (enlaces de correos, QR y avisos de Wompi) |
+| `Smtp__Host`, `Smtp__Puerto`, `Smtp__Usuario`, `Smtp__Contrasena`, `Smtp__Remitente` | Envío de correos |
+| `Cloudinary__CloudName`, `Cloudinary__ApiKey`, `Cloudinary__ApiSecret` | Archivos privados (contratos firmados, fotos, PDF) |
+| `Wompi__AppId`, `Wompi__ApiSecret` | Pago en línea (Wompi El Salvador) |
+| `Wompi__PermitirProductivo=true` | Solo en producción: acepta pagos reales. QA los rechaza |
+
+El aviso de Wompi llega a `/wompi/aviso`; configúralo como URL de webhook en el panel de Wompi. El pago solo se registra con ese aviso y su firma, nunca con la redirección del navegador.
+
+### Procesos automáticos
+
+Cada hora la aplicación ejecuta `SP_EJECUTAR_PROCESOS_DIARIOS` (rentas y mora; se pone al día si el servidor estuvo apagado) y cada minuto envía la cola de avisos de cobro y comprobantes. Se desactivan con `Procesos__Habilitado=false`.
+
 ### Otros comandos
 
 | Comando | Para qué |

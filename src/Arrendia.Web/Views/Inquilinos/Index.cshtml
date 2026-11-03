@@ -1,0 +1,56 @@
+@model InquilinosModelo
+@{
+    ViewData["Title"] = "Inquilinos";
+    var f = Model.Filtro;
+}
+<partial name="_Avisos" />
+<div class="ph">
+    <div>
+        <h2>Inquilinos</h2>
+        <p class="muted">@Model.Inquilinos.Count @(Model.Inquilinos.Count == 1 ? "inquilino" : "inquilinos")</p>
+    </div>
+    @if (Model.Permisos.CrearContratos)
+    {
+        <a class="btn pri" asp-action="Nuevo">@Iconos.Svg("plus", "s")Nuevo inquilino</a>
+    }
+</div>
+<form method="get" class="toolbar" role="search">
+    <div class="buscar">@Iconos.Svg("search", "s")<input name="buscar" class="inp" value="@f.Buscar" placeholder="Nombre, DUI, NIT, teléfono o correo" aria-label="Buscar" /></div>
+    <select name="estado" class="sel" aria-label="Estado">
+        <option value="">Todos los estados</option>
+        <option value="Activo" selected="@(f.Estado == "Activo")">Activos</option>
+        <option value="Inactivo" selected="@(f.Estado == "Inactivo")">Inactivos</option>
+    </select>
+    <select name="acceso" class="sel" aria-label="Acceso al portal">
+        <option value="">Portal: todos</option>
+        @foreach (var a in Arrendia.Web.Controllers.InquilinosController.Accesos) { <option value="@a" selected="@(a == f.Acceso)">@a</option> }
+    </select>
+    <button type="submit" class="btn">Filtrar</button>
+</form>
+<section class="card">
+    @if (Model.Inquilinos.Count == 0)
+    {
+        <div class="vacio">@Iconos.Svg("users", "xl")<b>No hay inquilinos</b><span>Registra a las personas o empresas que alquilan para poder hacerles un contrato.</span></div>
+    }
+    else
+    {
+        <div class="tw">
+            <table class="tbl">
+                <thead><tr><th>Inquilino</th><th>Contacto</th><th class="r">Contratos activos</th><th class="r">Deuda</th><th>Portal</th><th>Estado</th></tr></thead>
+                <tbody>
+                    @foreach (var i in Model.Inquilinos)
+                    {
+                        <tr>
+                            <td data-l="Inquilino"><a class="enlace-fila" asp-action="Detalle" asp-route-id="@i.Id">@i.Nombre</a><small class="muted bloque mono">@i.Documento</small></td>
+                            <td data-l="Contacto">@(i.Email ?? "—")<small class="muted bloque">@i.Telefono</small></td>
+                            <td data-l="Contratos" class="r num">@i.ContratosActivos</td>
+                            <td data-l="Deuda" class="r num">@Formato.Dinero(i.Deuda)</td>
+                            <td data-l="Portal"><span class="chip @Estados.Clase(i.Acceso)">@i.Acceso</span></td>
+                            <td data-l="Estado"><span class="chip @(i.Estado == "Activo" ? "ok" : "")">@i.Estado</span></td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+</section>
