@@ -1,0 +1,88 @@
+@model TecnicoPublicoModelo
+@{
+    ViewData["Title"] = Model.Reporte?.Numero ?? "Trabajo";
+    Layout = "_LayoutPublico";
+    var r = Model.Reporte;
+}
+@if (Model.Mensaje is not null)
+{
+    <div class="mensaje espacio">
+        <span class="sello">@Iconos.Svg("check", "l")</span>
+        <h1>Trabajo terminado</h1>
+        <p class="muted">@Model.Mensaje</p>
+    </div>
+}
+else if (r is null)
+{
+    <div class="mensaje espacio">
+        <span class="sello alerta">@Iconos.Svg("alert", "l")</span>
+        <h1>Este enlace ya no sirve</h1>
+        <p class="muted">@Model.Error</p>
+    </div>
+}
+else
+{
+    <div class="col encabezado">
+        <span class="muted mono">@r.Numero</span>
+        <h2>@r.Titulo</h2>
+        <div class="row"><span class="chip @Estados.Clase(r.Prioridad)">@r.Prioridad</span><span class="chip @Estados.Clase(r.Estado)">@r.Estado</span></div>
+    </div>
+    @if (Model.Error is not null)
+    {
+        <div class="aviso error" role="alert">@Iconos.Svg("alert", "s")<span>@Model.Error</span></div>
+    }
+    <section class="card">
+        <div class="bd col">
+            <dl class="kv">
+                <dt>Lugar</dt><dd>@r.Ubicacion · @r.Propiedad</dd>
+                <dt>Dirección</dt><dd>@r.Direccion, @r.Municipio, @r.Departamento</dd>
+            </dl>
+            <a class="btn" href="@UbicacionMapa.EnlaceMaps(r.Propiedad, r.Municipio, r.Latitud, r.Longitud)" target="_blank" rel="noopener">@Iconos.Svg("pin", "s")Cómo llegar</a>
+            <p class="texto-largo">@r.Descripcion</p>
+        </div>
+    </section>
+    @if (r.Fotos.Count > 0)
+    {
+        <div class="fotos espacio">
+            @foreach (var f in r.Fotos)
+            {
+                <a href="/t/@Model.Token/foto/@f.Id" target="_blank" rel="noopener" class="foto">
+                    <img src="/t/@Model.Token/foto/@f.Id" alt="Foto" loading="lazy" />
+                    <span>@(f.Categoria == "FotoTrabajo" ? "Trabajo" : "Problema")</span>
+                </a>
+            }
+        </div>
+    }
+    @if (r.Estado == "Asignado")
+    {
+        if (!r.PinVerificado)
+        {
+            <form method="post" asp-antiforgery="true" action="/t/@Model.Token/pin" class="card formulario espacio" data-formulario>
+                <div class="campos">
+                    <div class="fld ancho">
+                        <label for="pin">Al terminar, pide el PIN de 4 dígitos a quien reportó el problema</label>
+                        <input id="pin" name="pin" class="inp mono pin" inputmode="numeric" maxlength="4" autocomplete="one-time-code" required />
+                        <span class="hint">Te quedan @r.IntentosRestantes intentos.</span>
+                    </div>
+                </div>
+                <div class="pie"><button type="submit" class="btn pri">Validar PIN</button></div>
+            </form>
+        }
+        else
+        {
+            <form method="post" asp-antiforgery="true" action="/t/@Model.Token/cerrar" enctype="multipart/form-data" class="card formulario espacio" data-formulario>
+                <div class="campos">
+                    <div class="fld ancho">
+                        <label for="fotos">Fotos del trabajo terminado</label>
+                        <input id="fotos" name="fotos" type="file" accept="image/jpeg,image/png,image/webp" multiple capture="environment" class="inp" required />
+                    </div>
+                    <div class="fld ancho">
+                        <label for="comentario">Comentario (opcional)</label>
+                        <textarea id="comentario" name="comentario" class="txa" rows="3" maxlength="1000"></textarea>
+                    </div>
+                </div>
+                <div class="pie"><button type="submit" class="btn pri">Marcar como terminado</button></div>
+            </form>
+        }
+    }
+}

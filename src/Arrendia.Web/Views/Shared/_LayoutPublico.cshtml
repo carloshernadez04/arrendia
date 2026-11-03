@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <partial name="_Cabecera" />
+    @await RenderSectionAsync("Cabecera", required: false)
+    <title>@(ViewData["Title"] is string t ? $"{t} · Arrendia" : "Arrendia")</title>
+</head>
+<body>
+    <div class="publico">
+        <header class="publico-top">
+            @Iconos.Logo<b class="marca">Arrendia</b>
+            <span class="grow"></span>
+            <partial name="_BotonTema" />
+        </header>
+        <main class="publico-main" id="vista">
+            @RenderBody()
+        </main>
+    </div>
+</body>
+</html>

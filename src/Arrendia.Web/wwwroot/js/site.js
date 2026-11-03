@@ -105,14 +105,57 @@
   });
 
   document.querySelectorAll("[data-mostrar-si]").forEach(function (bloque) {
-    var nombre = bloque.getAttribute("data-mostrar-si");
+    var regla = bloque.getAttribute("data-mostrar-si").split("=");
+    var nombre = regla[0];
+    var valor = regla.length > 1 ? regla[1] : "true";
     var radios = document.querySelectorAll("input[type=radio][name='" + nombre + "']");
     function actualizar() {
       var marcado = document.querySelector("input[type=radio][name='" + nombre + "']:checked");
-      bloque.hidden = !marcado || marcado.value !== "true";
+      bloque.hidden = !marcado || marcado.value !== valor;
     }
     radios.forEach(function (r) { r.addEventListener("change", actualizar); });
     actualizar();
+  });
+
+  document.addEventListener("click", function (evento) {
+    var boton = evento.target.closest("[data-copiar]");
+    if (!boton) return;
+    var campo = boton.parentElement.querySelector("[data-copiable]");
+    if (!campo) return;
+    campo.select();
+    var listo = function () {
+      var texto = boton.textContent;
+      boton.textContent = "Copiado";
+      setTimeout(function () { boton.textContent = texto; }, 1600);
+    };
+    if (navigator.clipboard) navigator.clipboard.writeText(campo.value).then(listo, listo);
+    else { document.execCommand("copy"); listo(); }
+  });
+
+  document.querySelectorAll("[data-total-cargos]").forEach(function (formulario) {
+    var monto = formulario.querySelector("[data-monto]");
+    var resumen = formulario.querySelector("[data-resumen-cargos]");
+    function recalcular() {
+      var total = 0, cuantos = 0;
+      formulario.querySelectorAll("input[data-saldo]:checked").forEach(function (c) {
+        total += parseFloat(c.getAttribute("data-saldo")) || 0;
+        cuantos++;
+      });
+      if (resumen) resumen.textContent = cuantos === 0 ? "Se aplicará a los cargos más antiguos primero." : cuantos + (cuantos === 1 ? " cargo elegido: $" : " cargos elegidos: $") + total.toFixed(2);
+      if (monto && cuantos > 0) monto.value = total.toFixed(2);
+    }
+    formulario.addEventListener("change", function (e) { if (e.target.matches("input[data-saldo]")) recalcular(); });
+    recalcular();
+  });
+
+  document.querySelectorAll("select[data-sugerir]").forEach(function (lista) {
+    var destino = document.getElementById(lista.getAttribute("data-sugerir"));
+    if (!destino) return;
+    lista.addEventListener("change", function () {
+      var opcion = lista.selectedOptions[0];
+      var valor = opcion ? opcion.getAttribute("data-valor") : null;
+      if (valor && !destino.value) destino.value = valor;
+    });
   });
 
   var plano = document.querySelector("[data-plano]");

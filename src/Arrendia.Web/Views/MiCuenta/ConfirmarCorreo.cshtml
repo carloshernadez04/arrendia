@@ -1,0 +1,13 @@
+@model ConfirmarCorreoModelo
+@{
+    ViewData["Title"] = "Confirmar correo";
+    Layout = "_LayoutAcceso";
+}
+<div class="mensaje">
+    <span class="sello">@Iconos.Svg("mail", "l")</span>
+    <h1>Confirma tu nuevo correo</h1>
+    <p class="muted">@Model.Nombre, desde ahora entrarás a Arrendia con <b>@Model.EmailNuevo</b>. Al confirmar se cierran tus sesiones abiertas.</p>
+    <form method="post" asp-action="ConfirmarCorreoPost" asp-route-token="@Model.Token" class="col" data-formulario>
+        <button type="submit" class="btn pri blk">Confirmar cambio</button>
+    </form>
+</div>

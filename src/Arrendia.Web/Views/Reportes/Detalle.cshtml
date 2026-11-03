@@ -1,0 +1,149 @@
+@model ReporteDetalleModelo
+@{
+    var r = Model.Reporte;
+    var p = Model.Permisos;
+    ViewData["Title"] = r.Titulo;
+    (string Estado, string Texto)[] transiciones = r.Estado switch
+    {
+        "Abierto" => [("Cancelado", "Cancelar reporte")],
+        "Asignado" => [("Abierto", "Quitar técnico para reasignar"), ("Cancelado", "Cancelar reporte")],
+        "Terminado" => [("Cerrado", "Revisado: cerrar reporte"), ("Asignado", "Rehacer: devolver al técnico")],
+        _ => [],
+    };
+}
+<partial name="_Avisos" />
+<div class="ph">
+    <div>
+        <h2>@r.Titulo <span class="chip @Estados.Clase(r.Estado)">@r.Estado</span> <span class="chip @Estados.Clase(r.Prioridad)">@r.Prioridad</span></h2>
+        <p class="muted"><span class="mono">@r.Numero</span> · @r.Ubicacion, @r.Propiedad · @r.Categoria · reportó @r.Reporto el @Formato.FechaHora(r.FechaCreacion)</p>
+    </div>
+    <a class="btn" asp-action="Index">@Iconos.Svg("chevL", "s")Reportes</a>
+</div>
+<div class="grid">
+    <section class="card c8">
+        <div class="hd"><h3>Problema</h3></div>
+        <div class="bd col">
+            <p class="texto-largo">@r.Descripcion</p>
+            <dl class="kv">
+                <dt>Dirección</dt><dd>@r.Direccion</dd>
+                @if (r.Inquilino is not null) { <dt>Inquilino</dt><dd><a href="/contratos/@r.ContratoId">@r.Inquilino</a></dd> }
+                <dt>Atención esperada</dt><dd>@r.HorasAtencion horas</dd>
+                @if (r.Tecnico is not null) { <dt>Técnico</dt><dd>@r.Tecnico · <a class="mono" href="tel:@r.TelefonoTecnico">@r.TelefonoTecnico</a></dd> }
+                @if (r.FechaTerminado is not null) { <dt>Terminado</dt><dd>@Formato.FechaHora(r.FechaTerminado)</dd> }
+                @if (r.Costo is not null) { <dt>Costo</dt><dd class="num">@Formato.Dinero(r.Costo) @if (r.Cobrado) { <span class="chip info">Cobrado al inquilino</span> }</dd> }
+            </dl>
+            @if (Model.Pin is not null)
+            {
+                <div class="aviso info">@Iconos.Svg("lock", "s")<span>PIN para el técnico: <b class="mono">@Model.Pin</b>. Dáselo cuando termine el trabajo en el área común.</span></div>
+            }
+            else if (r.UnidadId is not null && r.Estado is "Asignado")
+            {
+                <span class="hint">El PIN lo tiene el inquilino: se lo da al técnico cuando termina. La administración no lo ve.</span>
+            }
+        </div>
+    </section>
+    <section class="card c4">
+        <div class="hd"><h3>Técnico</h3></div>
+        <div class="bd col">
+            @if (r.EnlaceActivo)
+            {
+                <span class="chip ok">Enlace activo hasta @Formato.FechaHora(r.EnlaceExpira)</span>
+            }
+            @if (r.EnlaceBloqueado)
+            {
+                <span class="chip bad">Enlace bloqueado por PIN incorrecto</span>
+            }
+            @if (p.GestionarReportes && r.Estado is "Abierto" or "Asignado")
+            {
+                @if (Model.Tecnicos.Count == 0)
+                {
+                    <span class="muted">No hay técnicos activos con la especialidad @(r.Especialidad ?? "requerida"). <a href="/tecnicos/nuevo">Registra uno</a>.</span>
+                }
+                else
+                {
+                    <form method="post" asp-action="Asignar" asp-route-id="@r.Id" class="col" data-formulario>
+                        <select name="tecnicoId" class="sel" aria-label="Técnico">
+                            @foreach (var t in Model.Tecnicos) { <option value="@t.Id" selected="@(t.Id == r.TecnicoId)">@t.Nombre@(t.Email is null ? " (sin correo)" : "")</option> }
+                        </select>
+                        <label class="chk"><input type="checkbox" name="enviarCorreo" value="true" checked /> <span>Enviarle el enlace por correo</span></label>
+                        <button type="submit" class="btn pri">@(r.TecnicoId is null ? "Asignar técnico" : "Reasignar y enviar enlace nuevo")</button>
+                    </form>
+                }
+                @if (r.EnlaceActivo)
+                {
+                    <form method="post" asp-action="Revocar" asp-route-id="@r.Id"><button type="submit" class="btn sm">Revocar enlace</button></form>
+                }
+            }
+            else if (r.TecnicoId is null)
+            {
+                <span class="muted">Sin técnico asignado.</span>
+            }
+        </div>
+    </section>
+</div>
+<section class="card espacio">
+    <div class="hd"><h3>Fotos</h3></div>
+    @if (Model.Fotos.Count == 0)
+    {
+        <div class="vacio"><span>Sin fotos.</span></div>
+    }
+    else
+    {
+        <div class="fotos">
+            @foreach (var f in Model.Fotos)
+            {
+                <a href="/archivos/@f.Id" target="_blank" rel="noopener" class="foto">
+                    <img src="/archivos/@f.Id" alt="@(f.Categoria == "FotoTrabajo" ? "Trabajo terminado" : "Foto del problema")" loading="lazy" />
+                    <span>@(f.Categoria == "FotoTrabajo" ? "Trabajo terminado" : "Problema")</span>
+                </a>
+            }
+        </div>
+    }
+    <form method="post" asp-action="Fotos" asp-route-id="@r.Id" enctype="multipart/form-data" class="linea-form" data-formulario>
+        <input name="fotos" type="file" accept="image/jpeg,image/png,image/webp" multiple class="inp" aria-label="Fotos" required />
+        <button type="submit" class="btn">Agregar fotos</button>
+    </form>
+</section>
+<div class="grid espacio">
+    <section class="card c8">
+        <div class="hd"><h3>Historial</h3></div>
+        <ol class="linea-tiempo">
+            @foreach (var h in Model.Historial)
+            {
+                <li>
+                    <b>@(h.EstadoAnterior is null || h.EstadoAnterior == h.EstadoNuevo ? h.EstadoNuevo : $"{h.EstadoAnterior} → {h.EstadoNuevo}")</b>
+                    <span>@h.Comentario</span>
+                    <small class="muted">@h.Quien · @Formato.FechaHora(h.FechaCreacion)</small>
+                </li>
+            }
+        </ol>
+    </section>
+    <section class="card c4">
+        <div class="hd"><h3>Acciones</h3></div>
+        <div class="bd col">
+            @if (p.GestionarReportes)
+            {
+                @foreach (var (estado, texto) in transiciones)
+                {
+                    <form method="post" asp-action="Estado" asp-route-id="@r.Id" class="col" data-formulario>
+                        <input type="hidden" name="estado" value="@estado" />
+                        <input name="comentario" class="inp" placeholder="Comentario (opcional)" aria-label="Comentario" maxlength="1000" />
+                        <button type="submit" class="btn">@texto</button>
+                    </form>
+                }
+            }
+            @if (p.EsAdministrador && r.Estado is not "Cancelado")
+            {
+                <form method="post" asp-action="Costo" asp-route-id="@r.Id" class="col" data-formulario>
+                    <label class="etiqueta" for="costo">Costo de la reparación</label>
+                    <div class="pre"><span>$</span><input id="costo" name="costo" type="number" step="0.01" min="0" class="inp num" value="@r.Costo?.ToString("0.00", System.Globalization.CultureInfo.InvariantCulture)" required /></div>
+                    @if (r.ContratoId is not null && !r.Cobrado)
+                    {
+                        <label class="chk"><input type="checkbox" name="cobrar" value="true" /> <span>Cobrarlo al inquilino (cargo de reparación)</span></label>
+                    }
+                    <button type="submit" class="btn">Guardar costo</button>
+                </form>
+            }
+        </div>
+    </section>
+</div>

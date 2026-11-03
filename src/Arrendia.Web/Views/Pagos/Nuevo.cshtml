@@ -1,0 +1,75 @@
+@model PagoFormulario
+@using System.Globalization
+@{
+    ViewData["Title"] = "Registrar pago";
+}
+<div class="ph">
+    <div>
+        <h2>Registrar pago</h2>
+        <p class="muted">Pagos en efectivo o por transferencia. El monto no puede pasar de lo que se debe.</p>
+    </div>
+</div>
+<form method="get" class="toolbar">
+    <select name="contrato" class="sel ancho-total" aria-label="Contrato">
+        <option value="">Elige el contrato</option>
+        @foreach (var c in Model.Contratos) { <option value="@c.Id" selected="@(c.Id == Model.ContratoId)">@c.Nombre</option> }
+    </select>
+    <button type="submit" class="btn">Ver cargos</button>
+</form>
+@if (Model.ContratoId is not null && Model.Contratos.Any(c => c.Id == Model.ContratoId))
+{
+    if (Model.Pendientes.Count == 0)
+    {
+        <section class="card"><div class="vacio">@Iconos.Svg("check", "xl")<b>Este contrato está al día</b><span>No tiene cargos pendientes.</span></div></section>
+    }
+    else
+    {
+        <form method="post" enctype="multipart/form-data" class="card formulario" novalidate data-formulario data-total-cargos>
+            <div asp-validation-summary="All" class="aviso error"></div>
+            <input type="hidden" asp-for="ContratoId" />
+            <div class="campos">
+                <fieldset class="fld ancho">
+                    <legend class="etiqueta">Cargos pendientes · deuda total @Formato.Dinero(Model.Deuda)</legend>
+                    <div class="lista-cargos">
+                        @foreach (var c in Model.Pendientes)
+                        {
+                            <label class="chk cargo">
+                                <input type="checkbox" name="Cargos" value="@c.Id" data-saldo="@c.Saldo.ToString("0.00", CultureInfo.InvariantCulture)" checked="@Model.Cargos.Contains(c.Id)" />
+                                <span class="grow">@c.Descripcion<small class="muted bloque">Vence @Formato.Fecha(c.FechaBase)</small></span>
+                                <b class="num">@Formato.Dinero(c.Saldo)</b>
+                            </label>
+                        }
+                    </div>
+                    <span class="hint" data-resumen-cargos>Se aplicará a los cargos más antiguos primero.</span>
+                    @if (!Model.PermiteParciales)
+                    {
+                        <span class="chip warn">Este contrato no permite pagos parciales</span>
+                    }
+                </fieldset>
+                <div class="fld">
+                    <label for="Monto">Monto recibido</label>
+                    <div class="pre"><span>$</span><input id="Monto" name="Monto" type="number" step="0.01" min="0.01" max="@Model.Deuda.ToString("0.00", CultureInfo.InvariantCulture)" class="inp num" value="@Model.Monto?.ToString("0.00", CultureInfo.InvariantCulture)" inputmode="decimal" required data-monto /></div>
+                </div>
+                <div class="fld">
+                    <label for="Metodo">Método</label>
+                    <select id="Metodo" name="Metodo" class="sel">
+                        <option value="Efectivo" selected="@(Model.Metodo == "Efectivo")">Efectivo</option>
+                        <option value="Transferencia" selected="@(Model.Metodo == "Transferencia")">Transferencia</option>
+                    </select>
+                </div>
+                <div class="fld">
+                    <label for="Referencia">Referencia</label>
+                    <input id="Referencia" name="Referencia" class="inp mono" value="@Model.Referencia" maxlength="60" placeholder="Obligatoria en transferencias" />
+                </div>
+                <div class="fld">
+                    <label for="Comprobante">Foto del comprobante (opcional)</label>
+                    <input id="Comprobante" name="Comprobante" type="file" accept="image/jpeg,image/png,image/webp,application/pdf" class="inp" />
+                </div>
+            </div>
+            <div class="pie">
+                <a class="btn" asp-action="Index">Cancelar</a>
+                <button type="submit" class="btn pri">Registrar pago</button>
+            </div>
+        </form>
+    }
+}

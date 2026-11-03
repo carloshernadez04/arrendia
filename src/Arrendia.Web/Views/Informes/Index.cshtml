@@ -1,0 +1,82 @@
+@model InformesModelo
+@using Arrendia.Web.Controllers
+@{
+    ViewData["Title"] = "Informes";
+    var inf = Model.Informe;
+    var conFechas = Model.Tipo is "ingresos" or "trabajos";
+    var conCorte = Model.Tipo == "morosidad";
+    var conPropiedad = Model.Tipo is "ingresos" or "morosidad";
+    var consulta = $"tipo={Model.Tipo}&desde={Model.Desde:yyyy-MM-dd}&hasta={Model.Hasta:yyyy-MM-dd}{(Model.PropiedadId is null ? "" : $"&propiedad={Model.PropiedadId}")}";
+}
+<div class="ph">
+    <div>
+        <h2>Informes</h2>
+        <p class="muted">Consulta y descarga en PDF o Excel.</p>
+    </div>
+    <div class="row">
+        <a class="btn" href="/informes?@consulta&formato=pdf">@Iconos.Svg("file", "s")PDF</a>
+        <a class="btn" href="/informes?@consulta&formato=xlsx">@Iconos.Svg("file", "s")Excel</a>
+    </div>
+</div>
+<nav class="tabs" aria-label="Informes">
+    @foreach (var (clave, titulo) in InformesController.Tipos)
+    {
+        <a href="/informes?tipo=@clave" aria-current="@(clave == Model.Tipo ? "page" : null)">@titulo</a>
+    }
+</nav>
+<form method="get" class="toolbar">
+    <input type="hidden" name="tipo" value="@Model.Tipo" />
+    @if (conFechas)
+    {
+        <label class="row">Desde <input name="desde" type="date" class="inp" value="@Model.Desde.ToString("yyyy-MM-dd")" /></label>
+    }
+    @if (conFechas || conCorte)
+    {
+        <label class="row">@(conCorte ? "Al" : "Hasta") <input name="hasta" type="date" class="inp" value="@Model.Hasta.ToString("yyyy-MM-dd")" /></label>
+    }
+    @if (conPropiedad)
+    {
+        <select name="propiedad" class="sel" aria-label="Propiedad">
+            <option value="">Todas las propiedades</option>
+            @foreach (var p in Model.Propiedades) { <option value="@p.Id" selected="@(p.Id == Model.PropiedadId)">@p.Nombre</option> }
+        </select>
+    }
+    <button type="submit" class="btn">Ver</button>
+</form>
+<section class="card">
+    <div class="hd"><h3>@inf.Titulo</h3><span class="muted">@inf.Subtitulo</span></div>
+    @if (inf.Filas.Count == 0)
+    {
+        <div class="vacio">@Iconos.Svg("chart", "xl")<b>Sin datos para este periodo</b></div>
+    }
+    else
+    {
+        <div class="tw">
+            <table class="tbl">
+                <thead><tr>@foreach (var c in inf.Columnas) { <th class="@(c.Derecha ? "r" : "")">@c.Titulo</th> }</tr></thead>
+                <tbody>
+                    @foreach (var fila in inf.Filas)
+                    {
+                        <tr>@for (var k = 0; k < fila.Length; k++) { <td data-l="@inf.Columnas[k].Titulo" class="@(inf.Columnas[k].Derecha ? "r num" : "")">@inf.Texto(k, fila[k])</td> }</tr>
+                    }
+                    @if (inf.Totales is { } t)
+                    {
+                        <tr class="total">@for (var k = 0; k < t.Length; k++) { <td data-l="@inf.Columnas[k].Titulo" class="@(inf.Columnas[k].Derecha ? "r num" : "")">@inf.Texto(k, t[k])</td> }</tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+</section>
+@if (Model.Conceptos.Count > 0)
+{
+    <section class="card espacio">
+        <div class="hd"><h3>Por concepto</h3></div>
+        <ul class="lista">
+            @foreach (var c in Model.Conceptos)
+            {
+                <li><span>@c.Concepto</span><b class="num">@Formato.Dinero(c.Total)</b></li>
+            }
+        </ul>
+    </section>
+}

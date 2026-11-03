@@ -1,0 +1,16 @@
+@model Paginacion
+@{
+    string Url(int pagina)
+    {
+        var consulta = Context.Request.Query.Where(q => q.Key != "pagina").Select(q => $"{q.Key}={Uri.EscapeDataString(q.Value.ToString())}").Append($"pagina={pagina}");
+        return $"{Context.Request.Path}?{string.Join("&", consulta)}";
+    }
+}
+@if (Model.Paginas > 1)
+{
+    <nav class="paginas" aria-label="Páginas">
+        @if (Model.HayAnterior) { <a class="btn sm" href="@Url(Model.Pagina - 1)">@Iconos.Svg("chevL", "s")Anterior</a> }
+        <span class="muted">Página @Model.Pagina de @Model.Paginas · @Model.Total registros</span>
+        @if (Model.HaySiguiente) { <a class="btn sm" href="@Url(Model.Pagina + 1)">Siguiente</a> }
+    </nav>
+}

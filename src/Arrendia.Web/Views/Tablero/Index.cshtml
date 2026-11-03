@@ -1,18 +1,101 @@
+@model TableroModelo
+@using System.Globalization
 @{
     ViewData["Title"] = "Tablero";
     var nombre = (User.Identity?.Name ?? "").Split(' ')[0];
-    var hoy = TimeZoneInfo.ConvertTimeBySystemTimeZoneId(DateTime.UtcNow, "America/El_Salvador");
+    var i = Model.Indicadores;
+    var maximo = Math.Max(1m, Model.Serie.Select(s => Math.Max(s.Facturado, s.Cobrado)).DefaultIfEmpty(0).Max());
+    const int Alto = 160;
+    const int Ancho = 64;
+    string Y(decimal v) => (Alto - (double)(v / maximo) * Alto).ToString("0.#", CultureInfo.InvariantCulture);
+    string H(decimal v) => ((double)(v / maximo) * Alto).ToString("0.#", CultureInfo.InvariantCulture);
 }
+<partial name="_Avisos" />
 <div class="ph">
     <div>
         <h2>Hola, @nombre</h2>
-        <p class="muted">@hoy.ToString("dddd d 'de' MMMM 'de' yyyy")</p>
+        <p class="muted">@Formato.FechaLarga(Formato.HoySv())</p>
+    </div>
+    <div class="row">
+        <a class="btn" href="/cobranza">@Iconos.Svg("alert", "s")Cobranza</a>
+        <a class="btn pri" href="/pagos/nuevo">@Iconos.Svg("coin", "s")Registrar pago</a>
     </div>
 </div>
-<div class="card">
-    <div class="vacio">
-        @Iconos.Svg("chart", "xl")
-        <b>Aquí va el tablero</b>
-        <span>Los indicadores de cobros, ocupación y reportes aparecerán cuando se construyan esos módulos.</span>
-    </div>
+<div class="kpis">
+    <a class="kpi" href="/pagos"><span>Cobrado este mes</span><b>@Formato.Dinero(i.CobradoMes)</b><small>@i.Cobranza % de @Formato.Dinero(i.FacturadoMes) facturado</small></a>
+    <a class="kpi" href="/cargos?situacion=Por%20vencer"><span>Por cobrar</span><b>@Formato.Dinero(i.PorCobrar)</b><small>Cargos que aún no vencen</small></a>
+    <a class="kpi @(i.Vencido > 0 ? "malo" : "")" href="/cobranza"><span>Vencido</span><b>@Formato.Dinero(i.Vencido)</b><small>Saldos con atraso</small></a>
+    <a class="kpi" href="/unidades?estado=Disponible"><span>Ocupación</span><b>@i.Ocupacion %</b><small>@i.UnidadesOcupadas de @i.UnidadesTotales unidades</small></a>
+    <a class="kpi" href="/reportes"><span>Reportes abiertos</span><b>@i.ReportesAbiertos</b><small>Sin terminar</small></a>
+    <a class="kpi" href="/contratos?estado=Activo"><span>Contratos por vencer</span><b>@i.ContratosPorVencer</b><small>En los próximos 60 días</small></a>
+</div>
+<div class="grid espacio">
+    <section class="card c8">
+        <div class="hd"><h3>Facturado y cobrado</h3><div class="leyenda"><span><i class="fac"></i>Facturado</span><span><i class="cob"></i>Cobrado</span></div></div>
+        <div class="bd">
+            <svg class="grafica" viewBox="0 0 @(Model.Serie.Count * Ancho) @(Alto + 24)" role="img" aria-label="Facturado y cobrado de los últimos seis meses">
+                @for (var k = 0; k < Model.Serie.Count; k++)
+                {
+                    var s = Model.Serie[k];
+                    var x = k * Ancho;
+                    <g>
+                        <title>@Formato.Periodo(s.Mes): facturado @Formato.Dinero(s.Facturado), cobrado @Formato.Dinero(s.Cobrado)</title>
+                        <rect class="fac" x="@(x + 12)" y="@Y(s.Facturado)" width="18" height="@H(s.Facturado)" rx="3" />
+                        <rect class="cob" x="@(x + 34)" y="@Y(s.Cobrado)" width="18" height="@H(s.Cobrado)" rx="3" />
+                        <text x="@(x + Ancho / 2)" y="@(Alto + 17)" text-anchor="middle">@Formato.Periodo(s.Mes)[..3]</text>
+                    </g>
+                }
+            </svg>
+        </div>
+    </section>
+    <section class="card c4">
+        <div class="hd"><h3>Contratos por vencer</h3></div>
+        @if (Model.PorVencer.Count == 0)
+        {
+            <div class="vacio"><span>Ninguno en los próximos 60 días.</span></div>
+        }
+        else
+        {
+            <ul class="lista">
+                @foreach (var c in Model.PorVencer)
+                {
+                    <li><span><a class="mono" href="/contratos/@c.ContratoId">@c.Numero</a><small class="muted bloque">@c.Inquilino · @c.Unidad</small></span><span class="chip @(c.DiasRestantes <= 15 ? "bad" : "warn")">@c.DiasRestantes días</span></li>
+                }
+            </ul>
+        }
+    </section>
+</div>
+<div class="grid espacio">
+    <section class="card c6">
+        <div class="hd"><h3>Mayor atraso</h3><a class="btn sm" href="/cobranza">Ver cobranza</a></div>
+        @if (Model.Morosos.Count == 0)
+        {
+            <div class="vacio"><span>Nadie tiene saldos vencidos.</span></div>
+        }
+        else
+        {
+            <ul class="lista">
+                @foreach (var m in Model.Morosos)
+                {
+                    <li><span><a href="/contratos/@m.ContratoId">@m.Inquilino</a><small class="muted bloque">@m.Unidad · @m.MaxDiasAtraso días</small></span><b class="num malo">@Formato.Dinero(m.Vencido)</b></li>
+                }
+            </ul>
+        }
+    </section>
+    <section class="card c6">
+        <div class="hd"><h3>Reportes sin cerrar</h3><a class="btn sm" href="/reportes">Ver reportes</a></div>
+        @if (Model.Reportes.Count == 0)
+        {
+            <div class="vacio"><span>No hay reportes pendientes.</span></div>
+        }
+        else
+        {
+            <ul class="lista">
+                @foreach (var r in Model.Reportes)
+                {
+                    <li><span><a href="/reportes/@r.ReporteId">@r.Titulo</a><small class="muted bloque">@r.Ubicacion · @r.Propiedad</small></span><span class="chip @Estados.Clase(r.Estado)">@r.Estado</span></li>
+                }
+            </ul>
+        }
+    </section>
 </div>

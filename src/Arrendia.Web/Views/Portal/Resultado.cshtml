@@ -1,0 +1,41 @@
+@model ResultadoPagoModelo
+@{
+    ViewData["Title"] = "Resultado del pago";
+    Layout = "_LayoutPortal";
+    var i = Model.Intencion;
+}
+@section Cabecera {
+    @if (i.Estado == "Creada")
+    {
+        <meta http-equiv="refresh" content="6" />
+    }
+}
+<div class="mensaje espacio">
+    @switch (i.Estado)
+    {
+        case "Pagada":
+            <span class="sello">@Iconos.Svg("check", "l")</span>
+            <h1>¡Pago recibido!</h1>
+            <p class="muted">Registramos tu pago <b class="mono">@i.NumeroPago</b> por @Formato.Dinero(i.Monto). Te enviamos el comprobante por correo.</p>
+            <a class="btn pri" href="/portal/pagos/@i.PagoId/comprobante">Descargar comprobante</a>
+            break;
+        case "Creada":
+            <span class="sello">@Iconos.Svg("history", "l")</span>
+            <h1>Esperando la confirmación</h1>
+            <p class="muted">En cuanto Wompi nos confirme el pago de @Formato.Dinero(i.Monto), aparecerá aquí. Esta página se actualiza sola.</p>
+            break;
+        case "Fallida":
+            <span class="sello alerta">@Iconos.Svg("alert", "l")</span>
+            <h1>El pago no se completó</h1>
+            <p class="muted">Wompi no aprobó el pago. No se cobró nada. Puedes intentarlo de nuevo.</p>
+            <a class="btn pri" href="/portal/pagar">Intentar de nuevo</a>
+            break;
+        default:
+            <span class="sello alerta">@Iconos.Svg("alert", "l")</span>
+            <h1>La sesión de pago venció</h1>
+            <p class="muted">@(i.Error ?? "Pasaron más de 30 minutos sin completar el pago. Vuelve a intentarlo.")</p>
+            <a class="btn pri" href="/portal/pagar">Volver a pagar</a>
+            break;
+    }
+    <a class="btn" href="/portal">Ir al inicio</a>
+</div>

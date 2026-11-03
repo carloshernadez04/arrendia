@@ -1,0 +1,68 @@
+@model VerificarModelo
+@{
+    ViewData["Title"] = "Verificar documento";
+    Layout = "_LayoutPublico";
+    var d = Model.Documento;
+}
+<div class="col encabezado">
+    <h2>Verificar un documento</h2>
+    <p class="muted">Escribe el código de 12 caracteres que aparece al pie del PDF, junto al código QR.</p>
+</div>
+<form method="get" asp-action="Index" class="card formulario">
+    <div class="campos">
+        <div class="fld ancho">
+            <label for="codigo">Código de verificación</label>
+            <input id="codigo" name="codigo" class="inp mono" value="@Model.Codigo" maxlength="12" autocomplete="off" placeholder="ABCD2345EFGH" />
+        </div>
+    </div>
+    <div class="pie"><button type="submit" class="btn pri">Verificar</button></div>
+</form>
+@if (Model.Buscado && d is null)
+{
+    <div class="aviso error espacio" role="alert">@Iconos.Svg("alert", "s")<span>No encontramos un documento con el código @Model.Codigo.</span></div>
+}
+@if (d is not null)
+{
+    <section class="card espacio">
+        <div class="hd">
+            <h3>@Estados.Texto(d.Tipo) @d.Folio</h3>
+            @if (d.Anulado || d.EstadoPago == "Anulado")
+            {
+                <span class="chip bad">Anulado</span>
+            }
+            else
+            {
+                <span class="chip ok">Documento auténtico</span>
+            }
+        </div>
+        <div class="bd">
+            <dl class="kv">
+                <dt>Emitido</dt><dd>@Formato.FechaHora(d.FechaCreacion)</dd>
+                @if (d.Contrato is not null) { <dt>Contrato</dt><dd class="mono">@d.Contrato</dd> }
+                @if (d.Pago is not null) { <dt>Pago</dt><dd class="mono">@d.Pago · @Formato.Dinero(d.MontoPago)</dd> }
+                @if (d.Inquilino is not null) { <dt>Inquilino</dt><dd>@Ocultar(d.Inquilino)</dd> }
+            </dl>
+        </div>
+    </section>
+    <form method="post" asp-action="Comparar" asp-route-codigo="@Model.Codigo" enctype="multipart/form-data" class="card formulario espacio" data-formulario>
+        <div class="campos">
+            <div class="fld ancho">
+                <label for="archivo">¿Tienes el PDF? Compruébalo contra el original</label>
+                <input id="archivo" name="archivo" type="file" accept="application/pdf" class="inp" />
+                <span class="hint">El archivo no se guarda: solo se calcula su huella para compararla.</span>
+            </div>
+        </div>
+        <div class="pie"><button type="submit" class="btn">Comparar</button></div>
+    </form>
+    @if (Model.Comparacion is not null)
+    {
+        <div class="aviso @(Model.Coincide == true ? "ok" : "error") espacio" role="status">@Iconos.Svg(Model.Coincide == true ? "check" : "alert", "s")<span>@Model.Comparacion</span></div>
+    }
+}
+@functions {
+    private static string Ocultar(string nombre)
+    {
+        var partes = nombre.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+        return string.Join(' ', partes.Select((p, i) => i == 0 ? p : $"{p[0]}."));
+    }
+}

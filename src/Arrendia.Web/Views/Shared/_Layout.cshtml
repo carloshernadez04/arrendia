@@ -43,6 +43,7 @@
                     <button type="button" class="av" data-pop aria-haspopup="menu" aria-label="Cuenta">@Navegacion.Iniciales(nombre)</button>
                     <div class="pop" role="menu">
                         <div class="pop-h"><b>@nombre</b><span class="muted">@rol · @User.FindFirstValue(ClaimTypes.Email)</span></div>
+                        <a class="it" role="menuitem" href="/mi-cuenta">@Iconos.Svg("users", "s") Mi cuenta</a>
                         <form method="post" asp-controller="Cuenta" asp-action="Salir">
                             <button type="submit" class="it" role="menuitem">@Iconos.Svg("logout", "s") Cerrar sesión</button>
                         </form>

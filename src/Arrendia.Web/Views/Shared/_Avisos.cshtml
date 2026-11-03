@@ -6,3 +6,16 @@
 {
     <div class="aviso error" role="alert">@Iconos.Svg("alert", "s")<span>@error</span></div>
 }
+@if (TempData["Enlace"] is string enlace)
+{
+    <div class="aviso info copiar" role="status">
+        @Iconos.Svg("mail", "s")
+        <div class="col">
+            <span>@(TempData["EnlaceTitulo"] as string ?? "Copia este enlace y envíaselo:")</span>
+            <div class="row">
+                <input class="inp mono" value="@enlace" readonly aria-label="Enlace" data-copiable />
+                <button type="button" class="btn sm" data-copiar>Copiar</button>
+            </div>
+        </div>
+    </div>
+}

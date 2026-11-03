@@ -16,23 +16,8 @@ public sealed class InicioController : Controller
             : RedirectToAction("Entrar", "Cuenta");
 
     [AllowAnonymous]
+    [IgnoreAntiforgeryToken]
     [Route("/error")]
     [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
     public IActionResult Error() => View(model: Activity.Current?.Id ?? HttpContext.TraceIdentifier);
-}
-
-[Authorize(Roles = Roles.Personal)]
-[Route("tablero")]
-public sealed class TableroController : Controller
-{
-    [HttpGet("")]
-    public IActionResult Index() => View();
-}
-
-[Authorize(Roles = Roles.Inquilino)]
-[Route("portal")]
-public sealed class PortalController : Controller
-{
-    [HttpGet("")]
-    public IActionResult Index() => View();
 }

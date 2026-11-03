@@ -1,0 +1,50 @@
+@model ReporteDetalleModelo
+@{
+    var r = Model.Reporte;
+    ViewData["Title"] = r.Titulo;
+    Layout = "_LayoutPortal";
+}
+<partial name="_Avisos" />
+<div class="col encabezado">
+    <span class="muted mono">@r.Numero</span>
+    <h2>@r.Titulo</h2>
+    <div class="row"><span class="chip @Estados.Clase(r.Estado)">@r.Estado</span><span class="chip @Estados.Clase(r.Prioridad)">@r.Prioridad</span></div>
+</div>
+@if (Model.Pin is not null)
+{
+    <section class="card pin-caja">
+        <div class="bd col">
+            <span class="muted">Tu PIN para el técnico</span>
+            <b class="mono pin-grande">@Model.Pin</b>
+            <span class="hint">Dáselo solo cuando revises que el trabajo quedó bien. Con él, el técnico puede cerrar el reporte.</span>
+        </div>
+    </section>
+}
+<section class="card espacio">
+    <div class="bd col">
+        <dl class="kv">
+            <dt>Unidad</dt><dd>@r.Ubicacion · @r.Propiedad</dd>
+            <dt>Categoría</dt><dd>@r.Categoria</dd>
+            @if (r.Tecnico is not null) { <dt>Técnico</dt><dd>@r.Tecnico</dd> }
+        </dl>
+        <p class="texto-largo">@r.Descripcion</p>
+    </div>
+</section>
+@if (Model.Fotos.Count > 0)
+{
+    <div class="fotos espacio">
+        @foreach (var f in Model.Fotos)
+        {
+            <a href="/archivos/@f.Id" target="_blank" rel="noopener" class="foto"><img src="/archivos/@f.Id" alt="Foto" loading="lazy" /><span>@(f.Categoria == "FotoTrabajo" ? "Trabajo terminado" : "Problema")</span></a>
+        }
+    </div>
+}
+<section class="card espacio">
+    <div class="hd"><h3>Seguimiento</h3></div>
+    <ol class="linea-tiempo">
+        @foreach (var h in Model.Historial)
+        {
+            <li><b>@h.EstadoNuevo</b><span>@h.Comentario</span><small class="muted">@Formato.FechaHora(h.FechaCreacion)</small></li>
+        }
+    </ol>
+</section>
