@@ -30,7 +30,7 @@
             <dl class="kv">
                 @if (i.TipoPersona == "J") { <dt>Representante legal</dt><dd>@i.RepresentanteLegal</dd> }
                 @if (i.TipoPersona == "J") { <dt>NIT</dt><dd class="mono">@i.Nit</dd> } else { <dt>DUI</dt><dd class="mono">@i.Dui</dd> }
-                @if (i.TipoPersona == "N" && i.Nit is not null) { <dt>NIT</dt><dd class="mono">@i.Nit</dd> }
+                @if (i.TipoPersona == "N") { <dt>NIT</dt><dd class="mono">@(i.Nit ?? $"{i.Dui} (homologado con el DUI)")</dd> }
                 <dt>NRC</dt><dd class="mono">@(i.Nrc ?? "—")</dd>
                 <dt>Teléfono</dt><dd class="mono">@(i.Telefono ?? "—")</dd>
                 <dt>Dirección fiscal</dt><dd>@(i.DireccionFiscal ?? "—")</dd>
