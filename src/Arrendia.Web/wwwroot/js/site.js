@@ -25,6 +25,18 @@
       return;
     }
 
+    var abrir = objetivo.closest("[data-abrir-dialogo]");
+    if (abrir) {
+      var dialogo = document.getElementById(abrir.getAttribute("data-abrir-dialogo"));
+      if (dialogo && dialogo.showModal) dialogo.showModal();
+      return;
+    }
+    if (objetivo.closest("[data-cerrar-dialogo]") || objetivo.matches("dialog.modal")) {
+      var ventana = objetivo.closest("dialog");
+      if (ventana) ventana.close();
+      return;
+    }
+
     var disparador = objetivo.closest("[data-pop]");
     if (disparador) {
       var pop = disparador.parentElement.querySelector(".pop");

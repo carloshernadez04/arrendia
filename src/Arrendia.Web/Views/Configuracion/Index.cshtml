@@ -71,20 +71,26 @@
                                 <td>
                                     @if (!c.EsSistema)
                                     {
-                                        <details class="accion">
-                                            <summary class="btn sm">Editar</summary>
-                                            <form method="post" asp-action="Concepto" class="emergente col" data-formulario>
+                                        <button type="button" class="btn sm" data-abrir-dialogo="concepto-@c.Id">Editar</button>
+                                        <dialog id="concepto-@c.Id" class="modal" aria-labelledby="titulo-concepto-@c.Id">
+                                            <form method="post" asp-action="Concepto" class="formulario" data-formulario>
                                                 <input type="hidden" name="Id" value="@c.Id" />
                                                 <input type="hidden" name="Codigo" value="@c.Codigo" />
-                                                <input name="Nombre" class="inp" value="@c.Nombre" aria-label="Nombre" required />
-                                                <select name="AplicaIva" class="sel" aria-label="IVA">
-                                                    @foreach (var iva in new[] { "Si", "No", "SegunUnidad" }) { <option value="@iva" selected="@(iva == c.AplicaIva)">IVA: @Estados.Texto(iva)</option> }
-                                                </select>
-                                                <label class="chk"><input type="checkbox" name="GeneraMoraPorDefecto" value="true" checked="@c.GeneraMoraPorDefecto" /><input type="hidden" name="GeneraMoraPorDefecto" value="false" /> <span>Genera mora</span></label>
-                                                <label class="chk"><input type="checkbox" name="Activo" value="true" checked="@c.Activo" /><input type="hidden" name="Activo" value="false" /> <span>Activo</span></label>
-                                                <button type="submit" class="btn pri sm">Guardar</button>
+                                                <div class="hd"><h3 id="titulo-concepto-@c.Id">Editar concepto <span class="mono muted">@c.Codigo</span></h3><button type="button" class="btn sm" data-cerrar-dialogo>Cerrar</button></div>
+                                                <div class="campos">
+                                                    <div class="fld ancho"><label for="concepto-nombre-@c.Id">Nombre</label><input id="concepto-nombre-@c.Id" name="Nombre" class="inp" value="@c.Nombre" maxlength="60" required /></div>
+                                                    <div class="fld ancho">
+                                                        <label for="concepto-iva-@c.Id">IVA</label>
+                                                        <select id="concepto-iva-@c.Id" name="AplicaIva" class="sel">
+                                                            @foreach (var iva in new[] { "Si", "No", "SegunUnidad" }) { <option value="@iva" selected="@(iva == c.AplicaIva)">@Estados.Texto(iva)</option> }
+                                                        </select>
+                                                    </div>
+                                                    <label class="chk"><input type="checkbox" name="GeneraMoraPorDefecto" value="true" checked="@c.GeneraMoraPorDefecto" /><input type="hidden" name="GeneraMoraPorDefecto" value="false" /> <span>Genera mora si se atrasa</span></label>
+                                                    <label class="chk"><input type="checkbox" name="Activo" value="true" checked="@c.Activo" /><input type="hidden" name="Activo" value="false" /> <span>Activo</span></label>
+                                                </div>
+                                                <div class="pie"><button type="button" class="btn" data-cerrar-dialogo>Cancelar</button><button type="submit" class="btn pri">Guardar cambios</button></div>
                                             </form>
-                                        </details>
+                                        </dialog>
                                     }
                                 </td>
                             </tr>

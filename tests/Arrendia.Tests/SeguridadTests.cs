@@ -46,6 +46,7 @@ public class SeguridadTests(WebApplicationFactory<Program> fabrica) : IClassFixt
         Assert.Contains("default-src 'self'", politica, StringComparison.Ordinal);
         Assert.Contains("img-src 'self' data: https://res.cloudinary.com https://tile.openstreetmap.org;", politica, StringComparison.Ordinal);
         Assert.DoesNotContain("script-src", politica, StringComparison.Ordinal);
+        Assert.Contains("form-action 'self' https://*.wompi.sv;", politica, StringComparison.Ordinal);
         Assert.Contains("geolocation=(self)", string.Join(";", respuesta.Headers.GetValues("Permissions-Policy")), StringComparison.Ordinal);
     }
 
