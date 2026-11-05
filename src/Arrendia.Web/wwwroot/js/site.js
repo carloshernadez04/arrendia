@@ -158,6 +158,30 @@
     });
   });
 
+  document.querySelectorAll("input[type=file][multiple]").forEach(function (campo) {
+    if (typeof DataTransfer === "undefined") return;
+    var juntos = new DataTransfer();
+    var aviso = document.createElement("span");
+    aviso.className = "hint";
+    campo.insertAdjacentElement("afterend", aviso);
+
+    function mostrar() {
+      var n = juntos.files.length;
+      aviso.textContent = n === 0 ? "" : n === 1 ? "1 archivo elegido: " + juntos.files[0].name : n + " archivos elegidos. Puedes agregar más.";
+    }
+
+    campo.addEventListener("change", function () {
+      Array.prototype.forEach.call(campo.files, function (archivo) {
+        var repetido = Array.prototype.some.call(juntos.files, function (f) { return f.name === archivo.name && f.size === archivo.size; });
+        if (!repetido) juntos.items.add(archivo);
+      });
+      campo.files = juntos.files;
+      mostrar();
+    });
+
+    if (campo.form) campo.form.addEventListener("reset", function () { juntos = new DataTransfer(); mostrar(); });
+  });
+
   var plano = document.querySelector("[data-plano]");
   if (plano) {
     var tipos = ["o", "o", "o", "o", "o", "o", "d", "d", "m", ""];

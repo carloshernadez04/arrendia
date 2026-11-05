@@ -47,11 +47,11 @@
             <span class="num-paso">2</span>
             <div class="col">
                 <b>Sube el contrato firmado y actívalo</b>
-                <span class="muted">Foto o PDF del contrato con las dos firmas. Al activarlo la unidad queda ocupada y empiezan los cobros.</span>
+                <span class="muted">Fotos de cada página o el PDF del contrato con las dos firmas. Al activarlo la unidad queda ocupada y empiezan los cobros.</span>
                 @if (p.ActivarContratos)
                 {
                     <form method="post" asp-action="Activar" asp-route-id="@c.Id" enctype="multipart/form-data" class="row" data-formulario>
-                        <input type="file" name="firmado" accept="image/jpeg,image/png,image/webp,application/pdf" class="inp" required aria-label="Contrato firmado" />
+                        <input type="file" name="firmado" accept="image/jpeg,image/png,image/webp,application/pdf" multiple class="inp" required aria-label="Contrato firmado" />
                         <button type="submit" class="btn pri">Activar contrato</button>
                     </form>
                 }
