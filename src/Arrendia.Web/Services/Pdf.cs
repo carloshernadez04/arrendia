@@ -113,6 +113,20 @@ public static class PlantillasPdf
 
     public static void Configurar() => QuestPDF.Settings.License = LicenseType.Community;
 
+    public static byte[] Imagenes(IEnumerable<byte[]> imagenes) => Document.Create(d =>
+    {
+        foreach (var imagen in imagenes)
+        {
+            d.Page(p =>
+            {
+                p.Size(PageSizes.Letter);
+                p.Margin(24);
+                p.Content().AlignCenter().AlignMiddle().Image(imagen).FitArea()
+                    .WithRasterDpi(150).WithCompressionQuality(ImageCompressionQuality.Medium);
+            });
+        }
+    }).GeneratePdf();
+
     public static byte[] Qr(string texto)
     {
         using var generador = new QRCodeGenerator();

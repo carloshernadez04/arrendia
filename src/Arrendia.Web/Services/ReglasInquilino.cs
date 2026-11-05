@@ -23,6 +23,12 @@ public static partial class ReglasInquilino
 
     public static bool NitValido(string? nit) => nit is not null && FormatoNit().IsMatch(nit);
 
+    public static bool EsElMismoDui(string? nit, string? dui)
+    {
+        var digitos = SoloDigitos(nit);
+        return digitos.Length == 9 && digitos == SoloDigitos(dui);
+    }
+
     public static string? NormalizarDui(string? dui)
     {
         var digitos = SoloDigitos(dui);

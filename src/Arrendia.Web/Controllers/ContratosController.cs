@@ -130,7 +130,8 @@ public sealed class ContratosController(
     }
 
     [HttpPost("{id:int}/activar")]
-    public async Task<IActionResult> Activar(int id, IFormFile? firmado, CancellationToken cancelacion)
+    [RequestSizeLimit(TiposArchivo.TamanoEnvio)]
+    public async Task<IActionResult> Activar(int id, List<IFormFile> firmado, CancellationToken cancelacion)
     {
         var contrato = await repositorio.ObtenerAsync(id, User.Id(), cancelacion);
         if (contrato is null)
@@ -143,23 +144,23 @@ public sealed class ContratosController(
             return Forbid();
         }
 
-        var (tipo, error) = await TiposArchivo.ValidarAsync(firmado, TiposArchivo.ImagenesYPdf, cancelacion);
-        if (error is not null)
+        var (listo, error) = await TiposArchivo.PrepararAsync(firmado, $"contrato-firmado-{contrato.Numero}", cancelacion);
+        if (error is not null || listo is null)
         {
-            this.Fallo(error);
+            this.Fallo(error ?? "Elige el contrato firmado.");
             return RedirectToAction(nameof(Detalle), new { id });
         }
 
         try
         {
             string publicId;
-            await using (var flujo = firmado!.OpenReadStream())
+            await using (var flujo = new MemoryStream(listo.Datos))
             {
-                publicId = await almacen.GuardarAsync(flujo, tipo!, "contratos", cancelacion);
+                publicId = await almacen.GuardarAsync(flujo, listo.Tipo, "contratos", cancelacion);
             }
 
-            var archivoId = await archivos.RegistrarAsync(new NuevoArchivo(publicId, $"contrato-firmado-{contrato.Numero}{TiposArchivo.Extension(tipo!)}",
-                tipo!, firmado.Length, "ContratoFirmado", ContratoId: id, UsuarioId: User.Id()), cancelacion);
+            var archivoId = await archivos.RegistrarAsync(new NuevoArchivo(publicId, $"contrato-firmado-{contrato.Numero}{TiposArchivo.Extension(listo.Tipo)}",
+                listo.Tipo, listo.Datos.Length, "ContratoFirmado", ContratoId: id, UsuarioId: User.Id()), cancelacion);
             await repositorio.ActivarAsync(id, archivoId, User.Id(), cancelacion);
             this.Exito($"Contrato {contrato.Numero} activado. La unidad quedó ocupada y los cobros de renta se generan solos.");
         }

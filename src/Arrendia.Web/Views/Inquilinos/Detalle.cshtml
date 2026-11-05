@@ -30,7 +30,7 @@
             <dl class="kv">
                 @if (i.TipoPersona == "J") { <dt>Representante legal</dt><dd>@i.RepresentanteLegal</dd> }
                 @if (i.TipoPersona == "J") { <dt>NIT</dt><dd class="mono">@i.Nit</dd> } else { <dt>DUI</dt><dd class="mono">@i.Dui</dd> }
-                @if (i.TipoPersona == "N" && i.Nit is not null) { <dt>NIT</dt><dd class="mono">@i.Nit</dd> }
+                @if (i.TipoPersona == "N") { <dt>NIT</dt><dd class="mono">@(i.Nit ?? $"{i.Dui} (homologado con el DUI)")</dd> }
                 <dt>NRC</dt><dd class="mono">@(i.Nrc ?? "—")</dd>
                 <dt>Teléfono</dt><dd class="mono">@(i.Telefono ?? "—")</dd>
                 <dt>Dirección fiscal</dt><dd>@(i.DireccionFiscal ?? "—")</dd>
@@ -128,16 +128,19 @@
                                 @if (p.CrearContratos)
                                 {
                                     <div class="acciones">
-                                        <details class="accion">
-                                            <summary class="btn sm">Editar</summary>
-                                            <form method="post" asp-action="EditarContacto" asp-route-id="@i.Id" asp-route-contactoId="@c.Id" class="emergente col" data-formulario>
-                                                <input name="Nombre" class="inp" value="@c.Nombre" aria-label="Nombre" required />
-                                                <input name="Email" type="email" class="inp" value="@c.Email" aria-label="Correo" required />
-                                                <input name="Telefono" class="inp mono" value="@c.Telefono" aria-label="Teléfono" placeholder="7777-7777" />
-                                                <label class="chk"><input type="checkbox" name="RecibeAvisos" value="true" checked="@c.RecibeAvisos" /><input type="hidden" name="RecibeAvisos" value="false" /> <span>Recibe avisos</span></label>
-                                                <button type="submit" class="btn pri sm">Guardar</button>
+                                        <button type="button" class="btn sm" data-abrir-dialogo="contacto-@c.Id">Editar</button>
+                                        <dialog id="contacto-@c.Id" class="modal" aria-labelledby="titulo-contacto-@c.Id">
+                                            <form method="post" asp-action="EditarContacto" asp-route-id="@i.Id" asp-route-contactoId="@c.Id" class="formulario" data-formulario>
+                                                <div class="hd"><h3 id="titulo-contacto-@c.Id">Editar contacto</h3><button type="button" class="btn sm" data-cerrar-dialogo>Cerrar</button></div>
+                                                <div class="campos">
+                                                    <div class="fld ancho"><label for="contacto-nombre-@c.Id">Nombre</label><input id="contacto-nombre-@c.Id" name="Nombre" class="inp" value="@c.Nombre" required /></div>
+                                                    <div class="fld"><label for="contacto-email-@c.Id">Correo</label><input id="contacto-email-@c.Id" name="Email" type="email" class="inp" value="@c.Email" required /></div>
+                                                    <div class="fld"><label for="contacto-telefono-@c.Id">Teléfono</label><input id="contacto-telefono-@c.Id" name="Telefono" class="inp mono" value="@c.Telefono" placeholder="7777-7777" /></div>
+                                                    <label class="chk ancho"><input type="checkbox" name="RecibeAvisos" value="true" checked="@c.RecibeAvisos" /><input type="hidden" name="RecibeAvisos" value="false" /> <span>Recibe los avisos de cobro y los comprobantes</span></label>
+                                                </div>
+                                                <div class="pie"><button type="button" class="btn" data-cerrar-dialogo>Cancelar</button><button type="submit" class="btn pri">Guardar cambios</button></div>
                                             </form>
-                                        </details>
+                                        </dialog>
                                         @if (c.Activo && !c.EsPrincipal)
                                         {
                                             <form method="post" asp-action="Principal" asp-route-id="@i.Id" asp-route-contactoId="@c.Id"><button type="submit" class="btn sm">Hacer principal</button></form>

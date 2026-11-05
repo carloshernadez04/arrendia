@@ -121,6 +121,7 @@ public sealed class ReportesController(
     }
 
     [HttpPost("nuevo")]
+    [RequestSizeLimit(TiposArchivo.TamanoEnvio)]
     public async Task<IActionResult> Nuevo(ReporteFormulario modelo, CancellationToken cancelacion)
     {
         await OpcionesAsync(modelo, cancelacion);
@@ -242,6 +243,7 @@ public sealed class ReportesController(
     }
 
     [HttpPost("{id:int}/fotos")]
+    [RequestSizeLimit(TiposArchivo.TamanoEnvio)]
     public async Task<IActionResult> Fotos(int id, List<IFormFile> fotos, CancellationToken cancelacion)
     {
         if (await repositorio.ReporteAsync(id, User.Id(), cancelacion) is null)
@@ -388,6 +390,7 @@ public sealed class TecnicoController(IRepositorioMantenimiento repositorio, IRe
     }
 
     [HttpPost("cerrar")]
+    [RequestSizeLimit(TiposArchivo.TamanoEnvio)]
     [EnableRateLimiting(CuentaController.PoliticaLimite)]
     public async Task<IActionResult> Cerrar(string token, List<IFormFile> fotos, string? comentario, CancellationToken cancelacion)
     {
