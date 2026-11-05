@@ -18,7 +18,7 @@
 <form method="get" class="toolbar" role="search">
     <div class="buscar">@Iconos.Svg("search", "s")<input name="buscar" class="inp" value="@f.Buscar" placeholder="Número, título, unidad o técnico" aria-label="Buscar" /></div>
     <select name="estado" class="sel" aria-label="Estado">
-        <option value="">Todos los estados</option>
+        <option value="Todos" selected="@(f.Estado is null)">Todos los estados</option>
         @foreach (var e in ReportesController.EstadosReporte) { <option value="@e" selected="@(e == f.Estado)">@(e == "Pendientes" ? "Sin cerrar" : e)</option> }
     </select>
     <select name="prioridad" class="sel" aria-label="Prioridad">
