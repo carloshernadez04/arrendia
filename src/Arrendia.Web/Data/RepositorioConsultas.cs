@@ -195,7 +195,7 @@ public sealed class RepositorioConsultas(IBaseDatos baseDatos) : IRepositorioCon
     public async Task<(IReadOnlyList<BitacoraFila> Filas, int Total)> BitacoraAsync(FiltroBitacora filtro, int tamano, CancellationToken cancelacion)
     {
         const string Condicion = """
-            WHERE (@Tabla IS NULL OR b.TABLA = @Tabla) AND (@Accion IS NULL OR b.ACCION = @Accion)
+            WHERE (@Tabla IS NULL OR b.TABLA = @Tabla) AND (@Accion IS NULL OR b.ACCION LIKE @Accion)
               AND (@UsuarioId IS NULL OR b.USUARIO_ID = @UsuarioId)
               AND (@Desde IS NULL OR b.FECHA_CREACION >= @Desde) AND (@Hasta IS NULL OR b.FECHA_CREACION < DATEADD(DAY, 1, @Hasta))
             """;
@@ -211,7 +211,7 @@ public sealed class RepositorioConsultas(IBaseDatos baseDatos) : IRepositorioCon
             new
             {
                 filtro.Tabla,
-                filtro.Accion,
+                Accion = Texto.ComoPatron(filtro.Accion),
                 filtro.UsuarioId,
                 Desde = filtro.Desde?.Date.AddHours(6),
                 Hasta = filtro.Hasta?.Date.AddHours(6),
