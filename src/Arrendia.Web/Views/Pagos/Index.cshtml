@@ -30,8 +30,8 @@
         <option value="">Todas las propiedades</option>
         @foreach (var p in Model.Propiedades) { <option value="@p.Id" selected="@(p.Id == f.PropiedadId)">@p.Nombre</option> }
     </select>
-    <input name="desde" type="date" class="inp corto" value="@f.Desde?.ToString("yyyy-MM-dd")" aria-label="Desde" />
-    <input name="hasta" type="date" class="inp corto" value="@f.Hasta?.ToString("yyyy-MM-dd")" aria-label="Hasta" />
+    <label class="campo-filtro"><span>Desde</span><input name="desde" type="date" class="inp" value="@f.Desde?.ToString("yyyy-MM-dd")" /></label>
+    <label class="campo-filtro"><span>Hasta</span><input name="hasta" type="date" class="inp" value="@f.Hasta?.ToString("yyyy-MM-dd")" /></label>
     <button type="submit" class="btn">Filtrar</button>
 </form>
 <section class="card">
