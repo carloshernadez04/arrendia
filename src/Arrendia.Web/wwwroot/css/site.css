@@ -220,6 +220,9 @@ progress.barra::-moz-progress-bar{background:var(--acento-btn);border-radius:99p
 .buscar .inp{padding-left:34px;min-height:40px}
 .sel,.txa{width:100%;min-height:44px;padding:9px 12px;border:1px solid var(--borde);border-radius:var(--r-s);background:var(--superficie)}
 .toolbar .sel{width:auto;min-height:40px;min-width:150px}
+.toolbar .inp{min-height:40px}
+.campo-filtro{display:inline-flex;align-items:center;gap:8px;font-size:13px;color:var(--texto2);white-space:nowrap}
+.campo-filtro .inp{width:auto;color:var(--texto)}
 .sel.sm{min-height:32px;padding:4px 8px;width:auto;font-size:13px}
 .sel:focus,.txa:focus{outline:none;border-color:var(--acento);box-shadow:0 0 0 3px color-mix(in srgb,var(--acento) 22%,transparent)}
 .txa{resize:vertical}
@@ -300,6 +303,9 @@ a.kpi:hover{border-color:var(--texto2);transform:translateY(-2px)}
 .lista>li>span{min-width:0;overflow-wrap:anywhere}
 .lista>li form.row{flex-wrap:wrap;gap:8px}
 .lista>li form .inp,.lista>li form .sel{min-height:36px;width:auto}
+.lista>li form .btn.sm{min-height:36px}
+form.row>.inp,form.row>.sel{flex:1 1 220px;width:auto;min-width:0;min-height:40px}
+form.row>.btn{flex:none}
 .apagada{opacity:.55}
 .tbl tr.total td{font-weight:600;border-top:1px solid var(--borde)}
 .tbl td.detalle{max-width:420px;font-size:12px;overflow-wrap:anywhere;color:var(--texto2)}
@@ -379,6 +385,10 @@ a.kpi:hover{border-color:var(--texto2);transform:translateY(-2px)}
   .tbl td:first-child::before{display:none}
   .tbl .acciones{justify-content:flex-start;padding-top:8px}
   .toolbar .sel{flex:1}
+  .toolbar>.btn{flex:1 1 auto}
+  .campo-filtro{flex:1 1 100%}
+  .campo-filtro span{min-width:44px}
+  .campo-filtro .inp{flex:1;min-width:0}
 }
 @media (max-width:960px){
   .shell{grid-template-columns:minmax(0,1fr)}

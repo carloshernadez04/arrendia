@@ -28,11 +28,11 @@
     <input type="hidden" name="tipo" value="@Model.Tipo" />
     @if (conFechas)
     {
-        <label class="row">Desde <input name="desde" type="date" class="inp" value="@Model.Desde.ToString("yyyy-MM-dd")" /></label>
+        <label class="campo-filtro"><span>Desde</span><input name="desde" type="date" class="inp" value="@Model.Desde.ToString("yyyy-MM-dd")" /></label>
     }
     @if (conFechas || conCorte)
     {
-        <label class="row">@(conCorte ? "Al" : "Hasta") <input name="hasta" type="date" class="inp" value="@Model.Hasta.ToString("yyyy-MM-dd")" /></label>
+        <label class="campo-filtro"><span>@(conCorte ? "Al" : "Hasta")</span><input name="hasta" type="date" class="inp" value="@Model.Hasta.ToString("yyyy-MM-dd")" /></label>
     }
     @if (conPropiedad)
     {
