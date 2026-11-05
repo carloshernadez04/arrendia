@@ -71,7 +71,7 @@ public sealed class RepositorioArchivos(IBaseDatos baseDatos) : IRepositorioArch
             SELECT a.ID, a.PUBLIC_ID, a.NOMBRE_ORIGINAL, a.TIPO_MIME, a.TAMANO_BYTES, a.CATEGORIA, a.FECHA_CREACION
             FROM dbo.ARCHIVO a
             WHERE a.ID = @Id AND (
-                   a.SUBIDO_POR_USUARIO_ID = @UsuarioId
+                   (a.SUBIDO_POR_USUARIO_ID = @UsuarioId AND a.CONTRATO_ID IS NULL AND a.PAGO_ID IS NULL AND a.CARGO_ID IS NULL AND a.REPORTE_ID IS NULL)
                 OR (a.CONTRATO_ID IS NOT NULL AND dbo.FN_ACCESO_CONTRATO(@UsuarioId, a.CONTRATO_ID) = 1)
                 OR EXISTS (SELECT 1 FROM dbo.PAGO p WHERE p.ID = a.PAGO_ID AND dbo.FN_ACCESO_CONTRATO(@UsuarioId, p.CONTRATO_ID) = 1)
                 OR EXISTS (SELECT 1 FROM dbo.CARGO c WHERE c.ID = a.CARGO_ID AND dbo.FN_ACCESO_CONTRATO(@UsuarioId, c.CONTRATO_ID) = 1)

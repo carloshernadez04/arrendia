@@ -147,17 +147,17 @@
   document.querySelectorAll("[data-total-cargos]").forEach(function (formulario) {
     var monto = formulario.querySelector("[data-monto]");
     var resumen = formulario.querySelector("[data-resumen-cargos]");
-    function recalcular() {
+    function recalcular(cambio) {
       var total = 0, cuantos = 0;
       formulario.querySelectorAll("input[data-saldo]:checked").forEach(function (c) {
         total += parseFloat(c.getAttribute("data-saldo")) || 0;
         cuantos++;
       });
       if (resumen) resumen.textContent = cuantos === 0 ? "Se aplicará a los cargos más antiguos primero." : cuantos + (cuantos === 1 ? " cargo elegido: $" : " cargos elegidos: $") + total.toFixed(2);
-      if (monto && cuantos > 0) monto.value = total.toFixed(2);
+      if (monto && cuantos > 0 && (cambio || !monto.value)) monto.value = total.toFixed(2);
     }
-    formulario.addEventListener("change", function (e) { if (e.target.matches("input[data-saldo]")) recalcular(); });
-    recalcular();
+    formulario.addEventListener("change", function (e) { if (e.target.matches("input[data-saldo]")) recalcular(true); });
+    recalcular(false);
   });
 
   document.querySelectorAll("select[data-sugerir]").forEach(function (lista) {
