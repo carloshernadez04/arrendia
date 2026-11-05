@@ -102,7 +102,7 @@ public sealed class ReportesController(
     [HttpGet("")]
     public async Task<IActionResult> Index(string? estado, string? prioridad, int? propiedad, string? buscar, CancellationToken cancelacion)
     {
-        var filtro = new FiltroReportes(EstadosReporte.Contains(estado) ? estado : estado is null ? "Pendientes" : null,
+        var filtro = new FiltroReportes(EstadosReporte.Contains(estado) ? estado : string.IsNullOrEmpty(estado) ? "Pendientes" : null,
             Prioridades.Todas.Contains(prioridad) ? prioridad : null, propiedad, buscar);
         return View(new ReportesModelo
         {
