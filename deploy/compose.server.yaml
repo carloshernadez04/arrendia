@@ -1,5 +1,3 @@
-# Aplicación web de Arrendia en el servidor (se usa igual para QA y producción).
-# Variables que define el workflow: AMBIENTE, IMAGEN, APP_PORT.
 name: arrendia-${AMBIENTE}
 
 services:
@@ -11,10 +9,10 @@ services:
       DataProtection__Ruta: /claves
       Archivos__RutaLocal: /archivos
     volumes:
-      - claves:/claves                 # claves que firman las sesiones: sobreviven a cada despliegue
-      - archivos:/archivos             # archivos subidos cuando no hay Cloudinary configurado
+      - claves:/claves               
+      - archivos:/archivos            
     ports:
-      - "127.0.0.1:${APP_PORT}:8080"   # solo accesible por Cloudflare Tunnel, no desde la red
+      - "127.0.0.1:${APP_PORT}:8080"   
     networks: [arrendia-net]
     mem_limit: 512m
     read_only: true

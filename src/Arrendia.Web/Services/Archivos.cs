@@ -17,6 +17,8 @@ public sealed class OpcionesCloudinary
         !string.IsNullOrWhiteSpace(CloudName) && !string.IsNullOrWhiteSpace(ApiKey) && !string.IsNullOrWhiteSpace(ApiSecret);
 }
 
+public sealed record ArchivoListo(byte[] Datos, string Tipo, string Nombre);
+
 public sealed class OpcionesArchivos
 {
     public const string Seccion = "Archivos";
@@ -67,6 +69,56 @@ public static class TiposArchivo
         }
 
         return null;
+    }
+
+    public const int MaximoPorEnvio = 10;
+    public const long TamanoEnvio = 100_000_000;
+
+    public static async Task<(ArchivoListo? Archivo, string? Error)> PrepararAsync(IEnumerable<IFormFile>? archivos, string nombre, CancellationToken cancelacion)
+    {
+        var elegidos = (archivos ?? []).Where(a => a.Length > 0).ToList();
+        if (elegidos.Count == 0)
+        {
+            return (null, null);
+        }
+
+        if (elegidos.Count > MaximoPorEnvio)
+        {
+            return (null, $"Sube hasta {MaximoPorEnvio} archivos a la vez.");
+        }
+
+        var leidos = new List<ArchivoListo>();
+        foreach (var archivo in elegidos)
+        {
+            var (tipo, error) = await ValidarAsync(archivo, ImagenesYPdf, cancelacion);
+            if (error is not null)
+            {
+                return (null, elegidos.Count == 1 ? error : $"{archivo.FileName}: {error}");
+            }
+
+            using var memoria = new MemoryStream();
+            await using (var flujo = archivo.OpenReadStream())
+            {
+                await flujo.CopyToAsync(memoria, cancelacion);
+            }
+
+            leidos.Add(new ArchivoListo(memoria.ToArray(), tipo!, archivo.FileName));
+        }
+
+        if (leidos.Count == 1)
+        {
+            return (leidos[0], null);
+        }
+
+        if (leidos.Exists(l => l.Tipo == "application/pdf"))
+        {
+            return (null, "Para subir varias páginas elige solo fotos, o un único PDF.");
+        }
+
+        var pdf = PlantillasPdf.Imagenes(leidos.Select(l => l.Datos));
+        return pdf.Length > TamanoMaximo
+            ? (null, "Las fotos juntas pasan de 10 MB. Sube menos fotos o con menor resolución.")
+            : (new ArchivoListo(pdf, "application/pdf", $"{nombre}.pdf"), null);
     }
 
     public static async Task<(string? TipoMime, string? Error)> ValidarAsync(IFormFile? archivo, string[] permitidos, CancellationToken cancelacion)

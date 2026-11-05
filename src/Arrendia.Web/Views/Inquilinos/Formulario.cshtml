@@ -36,7 +36,7 @@
         <div class="fld">
             <label asp-for="Nit"></label>
             <input asp-for="Nit" class="inp mono" placeholder="0000-000000-000-0" inputmode="numeric" maxlength="17" />
-            <span class="hint" data-mostrar-si="TipoPersona=N">Opcional para personas naturales.</span>
+            <span class="hint" data-mostrar-si="TipoPersona=N">Opcional. Si su NIT está homologado, déjalo vacío o escribe el mismo DUI.</span>
             <span asp-validation-for="Nit" class="error-campo"></span>
         </div>
         <div class="fld" data-mostrar-si="TipoPersona=J">

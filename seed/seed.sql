@@ -1,16 +1,10 @@
--- Datos iniciales de Arrendia: catálogos, conceptos, parámetros, plantilla de condiciones, feriados y usuarios base.
--- Se ejecuta manualmente sobre una base que ya tiene su estructura creada. Se puede ejecutar varias veces:
--- solo inserta lo que falta. La estructura (tablas, procedimientos, vistas) NO vive en este repositorio.
---
--- El repositorio es público: aquí no van contraseñas. El administrador se crea sin contraseña
--- (PASSWORD_HASH nulo) y la activa con una invitación que genera la aplicación.
+
 SET NOCOUNT ON;
 SET XACT_ABORT ON;
 SET ANSI_NULLS ON;
-SET QUOTED_IDENTIFIER ON;   -- obligatorio: hay índices filtrados y columnas calculadas
+SET QUOTED_IDENTIFIER ON;   
 BEGIN TRANSACTION;
 
-/* Usuario del sistema: registra los procesos automáticos. Es el ID 1 y se crea a sí mismo. */
 IF NOT EXISTS (SELECT 1 FROM dbo.USUARIO WHERE ROL = 'Sistema')
 BEGIN
     SET IDENTITY_INSERT dbo.USUARIO ON;
@@ -20,7 +14,6 @@ BEGIN
 END;
 DECLARE @SISTEMA INT = (SELECT ID FROM dbo.USUARIO WHERE ROL = 'Sistema');
 
-/* Primer administrador. Cambia el correo antes de ejecutar en producción. */
 IF NOT EXISTS (SELECT 1 FROM dbo.USUARIO WHERE ROL = 'Administrador')
     INSERT INTO dbo.USUARIO (NOMBRE, EMAIL, PASSWORD_HASH, ROL, ACTIVO, CREADO_POR)
     VALUES (N'Administrador', N'admin@arrendia.site', NULL, 'Administrador', 0, @SISTEMA);
@@ -44,7 +37,6 @@ FROM (VALUES (N'Fuga o problema de agua', N'Fontanería', 24),
 JOIN dbo.ESPECIALIDAD e ON e.NOMBRE = v.ESPECIALIDAD
 WHERE NOT EXISTS (SELECT 1 FROM dbo.CATEGORIA_REPORTE c WHERE c.NOMBRE = v.NOMBRE);
 
-/* RENTA y MORA son del sistema: los procedimientos los buscan por código y no se editan. */
 INSERT INTO dbo.CONCEPTO_CARGO (CODIGO, NOMBRE, ES_SISTEMA, APLICA_IVA, GENERA_MORA_POR_DEFECTO, CREADO_POR)
 SELECT v.CODIGO, v.NOMBRE, v.SIS, v.IVA, v.MORA, @SISTEMA
 FROM (VALUES ('RENTA', N'Renta mensual', 1, 'SegunUnidad', 1),
@@ -69,7 +61,6 @@ FROM (VALUES ('Empresa.Nombre', N'Nombre de la empresa, S.A. de C.V.', 'Texto', 
              ('Mora.TopeDias', N'180', 'Numero', N'Días máximos de mora por cargo')) v (CLAVE, VALOR, TIPO, DESCRIPCION)
 WHERE NOT EXISTS (SELECT 1 FROM dbo.PARAMETRO p WHERE p.CLAVE = v.CLAVE);
 
-/* Plantillas de condiciones: se copian a cada contrato nuevo. Solo una es la predeterminada. */
 INSERT INTO dbo.PLANTILLA_CONDICIONES (NOMBRE, ES_PREDETERMINADA, DIA_PAGO, DIAS_EMISION_AVISO, APLICA_MORA, DIAS_GRACIA,
        PORCENTAJE_MORA_DIARIO, TIPO_TOPE_MORA, VALOR_TOPE_MORA, PERMITE_PAGOS_PARCIALES, CORRER_VENCIMIENTO_FERIADO, CREADO_POR)
 SELECT v.NOMBRE, v.PRED, 5, 5, 1, v.GRACIA, v.MORA, 'Ninguno', NULL, 1, 1, @SISTEMA
@@ -77,7 +68,6 @@ FROM (VALUES (N'Comercial estándar', 1, 5, 0.1000),
              (N'Residencial estándar', 0, 5, 0.0500)) v (NOMBRE, PRED, GRACIA, MORA)
 WHERE NOT EXISTS (SELECT 1 FROM dbo.PLANTILLA_CONDICIONES p WHERE p.NOMBRE = v.NOMBRE);
 
-/* Feriados nacionales de El Salvador (2026 y 2027). */
 INSERT INTO dbo.FERIADO (FECHA, NOMBRE)
 SELECT v.FECHA, v.NOMBRE
 FROM (VALUES ('2026-01-01', N'Año Nuevo'), ('2026-04-02', N'Jueves Santo'), ('2026-04-03', N'Viernes Santo'), ('2026-04-04', N'Sábado Santo'),

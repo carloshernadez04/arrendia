@@ -188,7 +188,7 @@ app.Use(async (contexto, siguiente) =>
     encabezados["Cross-Origin-Resource-Policy"] = "same-origin";
     encabezados["Content-Security-Policy"] =
         "default-src 'self'; img-src 'self' data: https://res.cloudinary.com https://tile.openstreetmap.org; " +
-        "object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'";
+        "object-src 'none'; base-uri 'self'; form-action 'self' https://*.wompi.sv; frame-ancestors 'none'";
     contexto.Response.OnStarting(() =>
     {
         var cache = encabezados.CacheControl.ToString();

@@ -194,6 +194,7 @@ public sealed partial class PortalController(
     public async Task<IActionResult> NuevoReporte(CancellationToken cancelacion) => View(await FormularioReporteAsync(new ReportePortalFormulario(), cancelacion));
 
     [HttpPost("reportes/nuevo")]
+    [RequestSizeLimit(TiposArchivo.TamanoEnvio)]
     public async Task<IActionResult> NuevoReporte(ReportePortalFormulario modelo, CancellationToken cancelacion)
     {
         await FormularioReporteAsync(modelo, cancelacion);

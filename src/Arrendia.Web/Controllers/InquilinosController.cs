@@ -396,9 +396,17 @@ public sealed class InquilinosController(
             ModelState.AddModelError(nameof(m.Nit), "Escribe el NIT de la empresa.");
         }
 
-        if (nit is not null && !ReglasInquilino.NitValido(nit))
+        if (m.TipoPersona == "N" && nit is not null && ReglasInquilino.EsElMismoDui(nit, dui))
         {
-            ModelState.AddModelError(nameof(m.Nit), "El NIT debe tener 14 dígitos (formato 0000-000000-000-0).");
+            nit = null;
+        }
+        else if (m.TipoPersona == "N" && nit is not null && !ReglasInquilino.NitValido(nit))
+        {
+            ModelState.AddModelError(nameof(m.Nit), "Escribe el mismo DUI (NIT homologado) o un NIT de 14 dígitos (formato 0000-000000-000-0).");
+        }
+        else if (nit is not null && !ReglasInquilino.NitValido(nit))
+        {
+            ModelState.AddModelError(nameof(m.Nit), "El NIT de una empresa tiene 14 dígitos (formato 0000-000000-000-0).");
         }
 
         if (m.TipoPersona == "J" && string.IsNullOrWhiteSpace(m.RepresentanteLegal))

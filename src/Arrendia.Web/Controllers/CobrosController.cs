@@ -68,6 +68,7 @@ public sealed class CargosController(
     }
 
     [HttpPost("nuevo")]
+    [RequestSizeLimit(TiposArchivo.TamanoEnvio)]
     public async Task<IActionResult> Nuevo(CargoFormulario modelo, CancellationToken cancelacion)
     {
         if (!(await permisos.DeAsync(User.Id(), cancelacion)).CargosManuales)
@@ -86,14 +87,10 @@ public sealed class CargosController(
             ModelState.AddModelError(nameof(modelo.ContratoId), $"El contrato empieza el {Formato.Fecha(contrato.FechaInicio)}: los cargos manuales se crean desde esa fecha.");
         }
 
-        string? tipo = null;
-        if (modelo.Respaldo is { Length: > 0 })
+        var (respaldo, errorRespaldo) = await TiposArchivo.PrepararAsync(modelo.Respaldo, "respaldo", cancelacion);
+        if (errorRespaldo is not null)
         {
-            (tipo, var error) = await TiposArchivo.ValidarAsync(modelo.Respaldo, TiposArchivo.ImagenesYPdf, cancelacion);
-            if (error is not null)
-            {
-                ModelState.AddModelError(nameof(modelo.Respaldo), error);
-            }
+            ModelState.AddModelError(nameof(modelo.Respaldo), errorRespaldo);
         }
 
         if (!ModelState.IsValid)
@@ -105,15 +102,15 @@ public sealed class CargosController(
         try
         {
             int? archivoId = null;
-            if (tipo is not null)
+            if (respaldo is not null)
             {
                 string publicId;
-                await using (var flujo = modelo.Respaldo!.OpenReadStream())
+                await using (var flujo = new MemoryStream(respaldo.Datos))
                 {
-                    publicId = await almacen.GuardarAsync(flujo, tipo, "respaldos", cancelacion);
+                    publicId = await almacen.GuardarAsync(flujo, respaldo.Tipo, "respaldos", cancelacion);
                 }
 
-                archivoId = await archivos.RegistrarAsync(new NuevoArchivo(publicId, modelo.Respaldo.FileName, tipo, modelo.Respaldo.Length, "RespaldoCargo",
+                archivoId = await archivos.RegistrarAsync(new NuevoArchivo(publicId, respaldo.Nombre, respaldo.Tipo, respaldo.Datos.Length, "RespaldoCargo",
                     ContratoId: modelo.ContratoId, UsuarioId: User.Id()), cancelacion);
             }
 
@@ -246,6 +243,7 @@ public sealed class PagosController(
     }
 
     [HttpPost("nuevo")]
+    [RequestSizeLimit(TiposArchivo.TamanoEnvio)]
     public async Task<IActionResult> Nuevo(PagoFormulario modelo, CancellationToken cancelacion)
     {
         if (!(await permisos.DeAsync(User.Id(), cancelacion)).RegistrarPagos)
@@ -277,14 +275,10 @@ public sealed class PagosController(
             ModelState.AddModelError(nameof(modelo.Monto), error);
         }
 
-        string? tipo = null;
-        if (modelo.Comprobante is { Length: > 0 })
+        var (comprobante, errorArchivo) = await TiposArchivo.PrepararAsync(modelo.Comprobante, "comprobante", cancelacion);
+        if (errorArchivo is not null)
         {
-            (tipo, var errorArchivo) = await TiposArchivo.ValidarAsync(modelo.Comprobante, TiposArchivo.ImagenesYPdf, cancelacion);
-            if (errorArchivo is not null)
-            {
-                ModelState.AddModelError(nameof(modelo.Comprobante), errorArchivo);
-            }
+            ModelState.AddModelError(nameof(modelo.Comprobante), errorArchivo);
         }
 
         if (!ModelState.IsValid)
@@ -295,15 +289,15 @@ public sealed class PagosController(
         try
         {
             int? archivoId = null;
-            if (tipo is not null)
+            if (comprobante is not null)
             {
                 string publicId;
-                await using (var flujo = modelo.Comprobante!.OpenReadStream())
+                await using (var flujo = new MemoryStream(comprobante.Datos))
                 {
-                    publicId = await almacen.GuardarAsync(flujo, tipo, "comprobantes", cancelacion);
+                    publicId = await almacen.GuardarAsync(flujo, comprobante.Tipo, "comprobantes", cancelacion);
                 }
 
-                archivoId = await archivos.RegistrarAsync(new NuevoArchivo(publicId, modelo.Comprobante.FileName, tipo, modelo.Comprobante.Length,
+                archivoId = await archivos.RegistrarAsync(new NuevoArchivo(publicId, comprobante.Nombre, comprobante.Tipo, comprobante.Datos.Length,
                     "ComprobanteTransferencia", ContratoId: modelo.ContratoId, UsuarioId: User.Id()), cancelacion);
             }
 

@@ -35,7 +35,7 @@ else
             </div>
             <div class="fld ancho"><label for="Titulo">Título</label><input id="Titulo" name="Titulo" class="inp" maxlength="120" value="@Model.Titulo" placeholder="Ej. No funciona el aire acondicionado" required /></div>
             <div class="fld ancho"><label for="Descripcion">Cuéntanos qué pasa</label><textarea id="Descripcion" name="Descripcion" class="txa" rows="4" maxlength="2000" required>@Model.Descripcion</textarea></div>
-            <div class="fld ancho"><label for="Fotos">Fotos (opcional)</label><input id="Fotos" name="Fotos" type="file" accept="image/jpeg,image/png,image/webp" multiple capture="environment" class="inp" /></div>
+            <div class="fld ancho"><label for="Fotos">Fotos (opcional)</label><input id="Fotos" name="Fotos" type="file" accept="image/jpeg,image/png,image/webp" multiple class="inp" /></div>
         </div>
         <div class="pie"><a class="btn" href="/portal/reportes">Cancelar</a><button type="submit" class="btn pri">Enviar reporte</button></div>
     </form>

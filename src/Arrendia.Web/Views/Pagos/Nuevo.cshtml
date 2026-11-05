@@ -62,8 +62,9 @@
                     <input id="Referencia" name="Referencia" class="inp mono" value="@Model.Referencia" maxlength="60" placeholder="Obligatoria en transferencias" />
                 </div>
                 <div class="fld">
-                    <label for="Comprobante">Foto del comprobante (opcional)</label>
-                    <input id="Comprobante" name="Comprobante" type="file" accept="image/jpeg,image/png,image/webp,application/pdf" class="inp" />
+                    <label for="Comprobante">Fotos del comprobante (opcional)</label>
+                    <input id="Comprobante" name="Comprobante" type="file" accept="image/jpeg,image/png,image/webp,application/pdf" multiple class="inp" />
+                    <span asp-validation-for="Comprobante" class="error-campo"></span>
                 </div>
             </div>
             <div class="pie">

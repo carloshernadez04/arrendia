@@ -25,6 +25,18 @@
       return;
     }
 
+    var abrir = objetivo.closest("[data-abrir-dialogo]");
+    if (abrir) {
+      var dialogo = document.getElementById(abrir.getAttribute("data-abrir-dialogo"));
+      if (dialogo && dialogo.showModal) dialogo.showModal();
+      return;
+    }
+    if (objetivo.closest("[data-cerrar-dialogo]") || objetivo.matches("dialog.modal")) {
+      var ventana = objetivo.closest("dialog");
+      if (ventana) ventana.close();
+      return;
+    }
+
     var disparador = objetivo.closest("[data-pop]");
     if (disparador) {
       var pop = disparador.parentElement.querySelector(".pop");
@@ -156,6 +168,30 @@
       var valor = opcion ? opcion.getAttribute("data-valor") : null;
       if (valor && !destino.value) destino.value = valor;
     });
+  });
+
+  document.querySelectorAll("input[type=file][multiple]").forEach(function (campo) {
+    if (typeof DataTransfer === "undefined") return;
+    var juntos = new DataTransfer();
+    var aviso = document.createElement("span");
+    aviso.className = "hint";
+    campo.insertAdjacentElement("afterend", aviso);
+
+    function mostrar() {
+      var n = juntos.files.length;
+      aviso.textContent = n === 0 ? "" : n === 1 ? "1 archivo elegido: " + juntos.files[0].name : n + " archivos elegidos. Puedes agregar más.";
+    }
+
+    campo.addEventListener("change", function () {
+      Array.prototype.forEach.call(campo.files, function (archivo) {
+        var repetido = Array.prototype.some.call(juntos.files, function (f) { return f.name === archivo.name && f.size === archivo.size; });
+        if (!repetido) juntos.items.add(archivo);
+      });
+      campo.files = juntos.files;
+      mostrar();
+    });
+
+    if (campo.form) campo.form.addEventListener("reset", function () { juntos = new DataTransfer(); mostrar(); });
   });
 
   var plano = document.querySelector("[data-plano]");

@@ -42,7 +42,7 @@ public sealed class CargoFormulario
 
     public string? GeneraMora { get; set; }
 
-    public IFormFile? Respaldo { get; set; }
+    public List<IFormFile> Respaldo { get; set; } = [];
 
     public IReadOnlyList<Opcion> Contratos { get; set; } = [];
     public IReadOnlyList<Concepto> Conceptos { get; set; } = [];
@@ -71,7 +71,7 @@ public sealed class PagoFormulario
 
     public List<int> Cargos { get; set; } = [];
 
-    public IFormFile? Comprobante { get; set; }
+    public List<IFormFile> Comprobante { get; set; } = [];
 
     public IReadOnlyList<Opcion> Contratos { get; set; } = [];
     public IReadOnlyList<CargoPendiente> Pendientes { get; set; } = [];

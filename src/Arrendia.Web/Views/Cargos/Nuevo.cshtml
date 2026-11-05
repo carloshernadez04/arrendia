@@ -46,8 +46,9 @@
         </div>
         <div class="fld ancho">
             <label asp-for="Respaldo">Respaldo (opcional)</label>
-            <input asp-for="Respaldo" type="file" accept="image/jpeg,image/png,image/webp,application/pdf" class="inp" />
-            <span class="hint">Factura o foto que justifica el cobro. Máximo 10 MB.</span>
+            <input asp-for="Respaldo" type="file" accept="image/jpeg,image/png,image/webp,application/pdf" multiple class="inp" />
+            <span class="hint">Factura o fotos que justifican el cobro. Si eliges varias fotos se guardan juntas en un PDF.</span>
+            <span asp-validation-for="Respaldo" class="error-campo"></span>
         </div>
     </div>
     <div class="pie">
