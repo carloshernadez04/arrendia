@@ -222,7 +222,7 @@ public sealed class RepositorioMantenimiento(IBaseDatos baseDatos) : IRepositori
     {
         await using var conexion = await baseDatos.AbrirAsync(cancelacion);
         var filas = await conexion.QueryAsync<Opcion>(new CommandDefinition(
-            "SELECT ID, NOMBRE FROM dbo.CATEGORIA_REPORTE WHERE ACTIVO = 1 ORDER BY NOMBRE", cancellationToken: cancelacion));
+            "SELECT ID, NOMBRE FROM dbo.CATEGORIA_REPORTE WHERE ACTIVO = 1 ORDER BY CASE WHEN NOMBRE = N'Otro' THEN 1 ELSE 0 END, NOMBRE", cancellationToken: cancelacion));
         return filas.AsList();
     }
 
