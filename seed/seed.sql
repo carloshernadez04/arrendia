@@ -50,9 +50,6 @@ FROM (VALUES ('RENTA', N'Renta mensual', 1, 'SegunUnidad', 1),
              ('OTRO', N'Otro cargo', 0, 'Si', 0)) v (CODIGO, NOMBRE, SIS, IVA, MORA)
 WHERE NOT EXISTS (SELECT 1 FROM dbo.CONCEPTO_CARGO c WHERE c.CODIGO = v.CODIGO);
 
-UPDATE dbo.CONCEPTO_CARGO SET APLICA_IVA = 'No'
-WHERE CODIGO = 'REPARACION' AND APLICA_IVA = 'Si' AND FECHA_MODIFICACION IS NULL;
-
 INSERT INTO dbo.PARAMETRO (CLAVE, VALOR, TIPO, DESCRIPCION, CREADO_POR)
 SELECT v.CLAVE, v.VALOR, v.TIPO, v.DESCRIPCION, @SISTEMA
 FROM (VALUES ('Empresa.Nombre', N'Nombre de la empresa, S.A. de C.V.', 'Texto', N'Aparece en avisos, comprobantes y contratos'),
