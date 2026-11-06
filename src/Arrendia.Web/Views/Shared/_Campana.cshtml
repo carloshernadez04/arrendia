@@ -1,0 +1,33 @@
+@inject Arrendia.Web.Data.IRepositorioNotificaciones repositorio
+@{
+    var lista = await repositorio.RecientesAsync(User.Id(), Context.RequestAborted);
+    long.TryParse(Context.Request.Cookies["arrendia-avisos"], out var visto);
+    long Marca(DateTime fecha) => new DateTimeOffset(DateTime.SpecifyKind(fecha, DateTimeKind.Utc)).ToUnixTimeSeconds();
+    var nuevas = lista.Count(n => Marca(n.Fecha) > visto);
+    var ultima = lista.Count > 0 ? Marca(lista[0].Fecha) : visto;
+}
+<div class="rel">
+    <button type="button" class="btn ghost icon campana" data-pop data-notificaciones="@ultima" aria-haspopup="true"
+            aria-label="@(nuevas > 0 ? $"Notificaciones, {nuevas} nuevas" : "Notificaciones")">
+        @Iconos.Svg("bell")
+        @if (nuevas > 0) { <span class="contador" data-contador>@(nuevas > 9 ? "9+" : nuevas.ToString(System.Globalization.CultureInfo.InvariantCulture))</span> }
+    </button>
+    <div class="pop notificaciones">
+        <div class="pop-h"><b>Notificaciones</b><span class="muted">Últimos @Arrendia.Web.Data.RepositorioNotificaciones.Dias días</span></div>
+        @if (lista.Count == 0)
+        {
+            <p class="muted vacio">No hay novedades.</p>
+        }
+        @foreach (var n in lista)
+        {
+            <a class="it notificacion@(Marca(n.Fecha) > visto ? " nueva" : "")" href="@n.Ruta">
+                @Iconos.Svg(n.Tipo == "Pago" ? "card" : "wrench", "s")
+                <span class="cuerpo">
+                    <b>@n.Titulo</b>
+                    <span>@(n.Tipo == "Pago" ? $"{n.Detalle} · {Formato.Dinero(n.Monto)}" : n.Detalle)</span>
+                    <time class="muted">@Formato.FechaHora(n.Fecha)</time>
+                </span>
+            </a>
+        }
+    </div>
+</div>

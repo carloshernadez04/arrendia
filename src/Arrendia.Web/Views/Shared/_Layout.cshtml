@@ -13,7 +13,7 @@
 <body>
     <div class="shell" data-shell>
         <aside class="side" aria-label="Menú principal">
-            <div class="brand">@Iconos.Logo<b>Arrendia</b></div>
+            <a class="brand" href="/tablero">@Iconos.Logo<b>Arrendia</b></a>
             <nav class="nav">
                 @foreach (var grupo in Navegacion.Para(User))
                 {
@@ -38,6 +38,7 @@
                 <button type="button" class="btn ghost icon burger" data-abrir-menu aria-label="Abrir menú">@Iconos.Svg("menu")</button>
                 <h1 class="titulo">@ViewData["Title"]</h1>
                 <span class="grow"></span>
+                <partial name="_Campana" />
                 <partial name="_BotonTema" />
                 <div class="rel">
                     <button type="button" class="av" data-pop aria-haspopup="menu" aria-label="Cuenta">@Navegacion.Iniciales(nombre)</button>

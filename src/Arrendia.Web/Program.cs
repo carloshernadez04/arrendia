@@ -36,6 +36,8 @@ builder.Services.AddScoped<IRepositorioMantenimiento, RepositorioMantenimiento>(
 builder.Services.AddScoped<IRepositorioPortal, RepositorioPortal>();
 builder.Services.AddScoped<IRepositorioConsultas, RepositorioConsultas>();
 builder.Services.AddScoped<ProcesadorAvisos>();
+builder.Services.AddScoped<IRepositorioNotificaciones, RepositorioNotificaciones>();
+builder.Services.AddSingleton<ColaNotificaciones>();
 builder.Services.Configure<OpcionesWompi>(builder.Configuration.GetSection(OpcionesWompi.Seccion));
 if (builder.Configuration.GetSection(OpcionesWompi.Seccion).Get<OpcionesWompi>()?.EstaConfigurado == true)
 {
@@ -141,6 +143,7 @@ if (!string.IsNullOrEmpty(builder.Configuration.GetConnectionString(BaseDatos.No
     {
         builder.Services.AddHostedService<ProcesosDiarios>();
         builder.Services.AddHostedService<ProcesadorCorreos>();
+        builder.Services.AddHostedService<EnvioNotificaciones>();
     }
 }
 

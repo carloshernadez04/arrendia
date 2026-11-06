@@ -21,6 +21,7 @@ public sealed partial class PortalController(
     IAlmacenArchivos almacen,
     IPasarelaPago pasarela,
     ProcesadorAvisos avisos,
+    ColaNotificaciones notificaciones,
     ServicioDocumentos servicioDocumentos,
     IHostEnvironment ambiente,
     ILogger<PortalController> registro) : Controller
@@ -215,6 +216,7 @@ public sealed partial class PortalController(
             var (id, numero, pin) = await mantenimiento.CrearReporteAsync(new NuevoReporte(unidad!.PropiedadId, unidad.UnidadId, null, modelo.CategoriaId!.Value,
                 modelo.Prioridad, Recortar(modelo.Titulo!, 120), Recortar(modelo.Descripcion!, 2000)), User.Id(), cancelacion);
             await ReportesController.GuardarFotosAsync(fotos, id, User.Id(), null, "FotoReporte", archivos, almacen, cancelacion);
+            notificaciones.Agregar(new EventoNotificacion("Reporte", id));
             this.Exito($"Recibimos tu reporte {numero}. Cuando el técnico termine, dale este PIN: {pin}. También lo ves aquí en el reporte.");
             return RedirectToAction(nameof(Reporte), new { id });
         }

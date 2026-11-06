@@ -9,6 +9,13 @@
     } catch (e) { }
   }
 
+  function marcarVistas(boton) {
+    document.cookie = "arrendia-avisos=" + boton.getAttribute("data-notificaciones") + "; path=/; max-age=31536000; samesite=lax" + (location.protocol === "https:" ? "; secure" : "");
+    var contador = boton.querySelector("[data-contador]");
+    if (contador) contador.remove();
+    boton.setAttribute("aria-label", "Notificaciones");
+  }
+
   function cerrarMenus() {
     document.querySelectorAll(".pop.on").forEach(function (p) { p.classList.remove("on"); });
   }
@@ -43,6 +50,7 @@
       var abierto = pop.classList.contains("on");
       cerrarMenus();
       if (!abierto) pop.classList.add("on");
+      if (!abierto && disparador.hasAttribute("data-notificaciones")) marcarVistas(disparador);
       return;
     }
     if (!objetivo.closest(".pop")) cerrarMenus();
