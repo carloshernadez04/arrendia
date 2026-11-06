@@ -269,6 +269,12 @@ public sealed class PagosController(
         }
 
         var elegidos = modelo.Pendientes.Where(c => modelo.Cargos.Contains(c.Id)).ToList();
+        if (elegidos.Count != modelo.Cargos.Distinct().Count())
+        {
+            modelo.Cargos = elegidos.ConvertAll(c => c.Id);
+            ModelState.AddModelError(nameof(modelo.Cargos), "Alguno de los cargos que elegiste ya no está pendiente. Revisa la selección y el monto antes de registrar el pago.");
+        }
+
         var error = ReglasPago.Validar(modelo.Monto, elegidos.Count > 0 ? elegidos : modelo.Pendientes, modelo.PermiteParciales);
         if (error is not null)
         {

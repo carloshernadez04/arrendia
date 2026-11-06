@@ -23,6 +23,7 @@ public static class Iconos
         ["history"] = "<path d=\"M4 12a8 8 0 1 0 2.5-5.8L4 8.5\"/><path d=\"M4 4v4.5h4.5M12 8v4l3 2\"/>",
         ["menu"] = "<path d=\"M4 7h16M4 12h16M4 17h16\"/>",
         ["sun"] = "<circle cx=\"12\" cy=\"12\" r=\"4\"/><path d=\"M12 3v2M12 19v2M3 12h2M19 12h2M5.6 5.6 7 7M17 17l1.4 1.4M5.6 18.4 7 17M17 7l1.4-1.4\"/>",
+        ["bell"] = "<path d=\"M6 10a6 6 0 0 1 12 0c0 4.2 1.4 6.2 2 7H4c.6-.8 2-2.8 2-7z\"/><path d=\"M10 20a2.2 2.2 0 0 0 4 0\"/>",
         ["moon"] = "<path d=\"M20 14.5A8.5 8.5 0 0 1 9.5 4 8.5 8.5 0 1 0 20 14.5z\"/>",
         ["monitor"] = "<rect x=\"3\" y=\"4\" width=\"18\" height=\"12\" rx=\"2\"/><path d=\"M8 20h8M12 16v4\"/>",
         ["logout"] = "<path d=\"M10 4H6a1 1 0 0 0-1 1v14a1 1 0 0 0 1 1h4M15 8l4 4-4 4M19 12H9\"/>",

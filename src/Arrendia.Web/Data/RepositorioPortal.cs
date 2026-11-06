@@ -136,7 +136,7 @@ public sealed class RepositorioPortal(IBaseDatos baseDatos) : IRepositorioPortal
     public async Task<string> ProcesarAvisoAsync(long eventoId, AvisoPasarela aviso, string respuesta, CancellationToken cancelacion)
     {
         await using var conexion = await baseDatos.AbrirAsync(cancelacion);
-        return await EjecucionSegura.ConReglasAsync(() => conexion.QuerySingleAsync<string>(EjecucionSegura.Procedimiento("dbo.SP_PROCESAR_WEBHOOK_PAGO", new
+        return await EjecucionSegura.ConReglasAsync(() => ResultadoAsync(conexion.QueryMultipleAsync(EjecucionSegura.Procedimiento("dbo.SP_PROCESAR_WEBHOOK_PAGO", new
         {
             WEBHOOK_EVENTO_ID = eventoId,
             ID_TRANSACCION = aviso.IdTransaccion.Length > 64 ? aviso.IdTransaccion[..64] : aviso.IdTransaccion,
@@ -146,6 +146,21 @@ public sealed class RepositorioPortal(IBaseDatos baseDatos) : IRepositorioPortal
             MEDIO_PAGO = aviso.MedioPago is { Length: > 30 } m ? m[..30] : aviso.MedioPago,
             FECHA_TRANSACCION = aviso.Fecha,
             RESPUESTA = respuesta,
-        }, cancelacion)));
+        }, cancelacion))));
+    }
+
+    private static async Task<string> ResultadoAsync(Task<SqlMapper.GridReader> consulta)
+    {
+        using var lector = await consulta;
+        var resultado = "";
+        while (!lector.IsConsumed)
+        {
+            if ((await lector.ReadAsync()).FirstOrDefault() is IDictionary<string, object> fila && fila.TryGetValue("RESULTADO", out var valor))
+            {
+                resultado = valor as string ?? "";
+            }
+        }
+
+        return resultado;
     }
 }
