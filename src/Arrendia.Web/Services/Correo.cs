@@ -140,6 +140,18 @@ public static class PlantillasCorreo
             "El comprobante va adjunto en PDF.") with
         { Adjunto = pdf };
 
+    public static MensajeCorreo Notificacion(string destinatario, string nombre, Data.Notificacion notificacion, string enlace) =>
+        Armar(destinatario, $"{notificacion.Titulo}: {notificacion.Detalle}",
+            $"Hola, {nombre}:",
+            [notificacion.Tipo switch
+            {
+                "Reporte" => $"Un inquilino reportó un problema: {notificacion.Detalle} ({notificacion.Numero}). Revísalo y asígnale un técnico.",
+                "Terminado" => $"El técnico marcó como terminado el trabajo {notificacion.Numero}: {notificacion.Detalle}. Revisa las fotos y ciérralo.",
+                _ => $"{notificacion.Detalle} pagó {Formato.Dinero(notificacion.Monto)} con tarjeta desde el portal. El pago {notificacion.Numero} ya quedó aplicado.",
+            }],
+            (notificacion.Tipo == "Pago" ? "Ver el pago" : "Ver el reporte", enlace),
+            "Recibes este aviso porque administras esta propiedad en Arrendia.");
+
     private static MensajeCorreo Armar(string destinatario, string asunto, string saludo, string[] parrafos, (string Texto, string Url)? boton, string? nota)
     {
         var texto = $"{saludo}\n\n{string.Join("\n\n", parrafos)}" +

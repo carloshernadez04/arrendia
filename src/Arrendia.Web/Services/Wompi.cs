@@ -141,7 +141,7 @@ public sealed class PasarelaSimulada(IHostEnvironment ambiente) : IPasarelaPago
     public bool FirmaValida(string cuerpo, string? firma) => ambiente.IsDevelopment() && FirmaWompi.Verificar(cuerpo, firma, Secreto);
 }
 
-public sealed partial class ProcesadorAvisos(IRepositorioPortal repositorio, IPasarelaPago pasarela, IOptions<OpcionesWompi> opciones, ILogger<ProcesadorAvisos> registro)
+public sealed partial class ProcesadorAvisos(IRepositorioPortal repositorio, IPasarelaPago pasarela, IOptions<OpcionesWompi> opciones, ColaNotificaciones notificaciones, ILogger<ProcesadorAvisos> registro)
 {
     public async Task<string> ProcesarAsync(string cuerpo, string? firma, CancellationToken cancelacion)
     {
@@ -161,8 +161,16 @@ public sealed partial class ProcesadorAvisos(IRepositorioPortal repositorio, IPa
             return "ignorado";
         }
 
-        return await repositorio.ProcesarAvisoAsync(eventoId, aviso, cuerpo, cancelacion);
+        var resultado = await repositorio.ProcesarAvisoAsync(eventoId, aviso, cuerpo, cancelacion);
+        if (resultado.StartsWith(PagoRegistrado, StringComparison.Ordinal))
+        {
+            notificaciones.Agregar(new EventoNotificacion("Pago", Numero: resultado[PagoRegistrado.Length..].Trim()));
+        }
+
+        return resultado;
     }
+
+    private const string PagoRegistrado = "Pago registrado:";
 
     private static string JsonValido(string cuerpo)
     {

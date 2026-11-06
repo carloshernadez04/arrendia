@@ -355,7 +355,7 @@ public static class Lugar
 
 [AllowAnonymous]
 [Route("t/{token}")]
-public sealed class TecnicoController(IRepositorioMantenimiento repositorio, IRepositorioArchivos archivos, IAlmacenArchivos almacen) : Controller
+public sealed class TecnicoController(IRepositorioMantenimiento repositorio, IRepositorioArchivos archivos, IAlmacenArchivos almacen, ColaNotificaciones notificaciones) : Controller
 {
     [HttpGet("")]
     public async Task<IActionResult> Index(string token, CancellationToken cancelacion) => View(await ModeloAsync(token, null, cancelacion));
@@ -416,6 +416,7 @@ public sealed class TecnicoController(IRepositorioMantenimiento repositorio, IRe
         try
         {
             await repositorio.CerrarPorTecnicoAsync(hash, string.IsNullOrWhiteSpace(comentario) ? null : comentario.Trim(), cancelacion);
+            notificaciones.Agregar(new EventoNotificacion("Terminado", enlace.Value.ReporteId));
             return View("Index", new TecnicoPublicoModelo { Token = token, Mensaje = "¡Listo! El trabajo quedó marcado como terminado. Gracias." });
         }
         catch (ReglaDeNegocioException error)

@@ -9,6 +9,13 @@
     } catch (e) { }
   }
 
+  function marcarVistas(boton) {
+    document.cookie = "arrendia-avisos=" + boton.getAttribute("data-notificaciones") + "; path=/; max-age=31536000; samesite=lax" + (location.protocol === "https:" ? "; secure" : "");
+    var contador = boton.querySelector("[data-contador]");
+    if (contador) contador.remove();
+    boton.setAttribute("aria-label", "Notificaciones");
+  }
+
   function cerrarMenus() {
     document.querySelectorAll(".pop.on").forEach(function (p) { p.classList.remove("on"); });
   }
@@ -43,6 +50,7 @@
       var abierto = pop.classList.contains("on");
       cerrarMenus();
       if (!abierto) pop.classList.add("on");
+      if (!abierto && disparador.hasAttribute("data-notificaciones")) marcarVistas(disparador);
       return;
     }
     if (!objetivo.closest(".pop")) cerrarMenus();
@@ -147,17 +155,17 @@
   document.querySelectorAll("[data-total-cargos]").forEach(function (formulario) {
     var monto = formulario.querySelector("[data-monto]");
     var resumen = formulario.querySelector("[data-resumen-cargos]");
-    function recalcular() {
+    function recalcular(cambio) {
       var total = 0, cuantos = 0;
       formulario.querySelectorAll("input[data-saldo]:checked").forEach(function (c) {
         total += parseFloat(c.getAttribute("data-saldo")) || 0;
         cuantos++;
       });
       if (resumen) resumen.textContent = cuantos === 0 ? "Se aplicará a los cargos más antiguos primero." : cuantos + (cuantos === 1 ? " cargo elegido: $" : " cargos elegidos: $") + total.toFixed(2);
-      if (monto && cuantos > 0) monto.value = total.toFixed(2);
+      if (monto && cuantos > 0 && (cambio || !monto.value)) monto.value = total.toFixed(2);
     }
-    formulario.addEventListener("change", function (e) { if (e.target.matches("input[data-saldo]")) recalcular(); });
-    recalcular();
+    formulario.addEventListener("change", function (e) { if (e.target.matches("input[data-saldo]")) recalcular(true); });
+    recalcular(false);
   });
 
   document.querySelectorAll("select[data-sugerir]").forEach(function (lista) {
