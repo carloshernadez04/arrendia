@@ -16,7 +16,7 @@ public class ServicioAccesoTests
         {
             Id = 7,
             Nombre = "Laura Quintanilla",
-            Email = "laura@arrendia.site",
+            Email = "laura@correo.sv",
             Rol = Roles.Administrador,
             Activo = true,
             SelloSeguridad = Guid.NewGuid(),
@@ -32,7 +32,7 @@ public class ServicioAccesoTests
     {
         var (servicio, repositorio) = Crear(u => u.IntentosFallidos = 3);
 
-        var resultado = await servicio.VerificarAsync("  LAURA@arrendia.site ", Contrasena, CancellationToken.None);
+        var resultado = await servicio.VerificarAsync("  LAURA@correo.sv ", Contrasena, CancellationToken.None);
 
         Assert.Equal(ResultadoIngreso.Correcto, resultado.Resultado);
         Assert.Equal(1, repositorio.Ingresos);
@@ -44,7 +44,7 @@ public class ServicioAccesoTests
     {
         var (servicio, repositorio) = Crear();
 
-        var resultado = await servicio.VerificarAsync("laura@arrendia.site", "otra-clave-1", CancellationToken.None);
+        var resultado = await servicio.VerificarAsync("laura@correo.sv", "otra-clave-1", CancellationToken.None);
 
         Assert.Equal(ResultadoIngreso.Incorrecto, resultado.Resultado);
         Assert.Equal(1, repositorio.Usuario.IntentosFallidos);
@@ -56,7 +56,7 @@ public class ServicioAccesoTests
     {
         var (servicio, repositorio) = Crear(u => u.IntentosFallidos = ServicioAcceso.IntentosMaximos - 1);
 
-        var resultado = await servicio.VerificarAsync("laura@arrendia.site", "otra-clave-1", CancellationToken.None);
+        var resultado = await servicio.VerificarAsync("laura@correo.sv", "otra-clave-1", CancellationToken.None);
 
         Assert.Equal(ResultadoIngreso.Bloqueado, resultado.Resultado);
         Assert.Equal(Ahora.AddMinutes(15), repositorio.Usuario.BloqueadoHasta);
@@ -67,7 +67,7 @@ public class ServicioAccesoTests
     {
         var (servicio, repositorio) = Crear(u => u.BloqueadoHasta = Ahora.AddMinutes(5));
 
-        var resultado = await servicio.VerificarAsync("laura@arrendia.site", Contrasena, CancellationToken.None);
+        var resultado = await servicio.VerificarAsync("laura@correo.sv", Contrasena, CancellationToken.None);
 
         Assert.Equal(ResultadoIngreso.Bloqueado, resultado.Resultado);
         Assert.Equal(0, repositorio.Ingresos);
@@ -78,7 +78,7 @@ public class ServicioAccesoTests
     {
         var (servicio, _) = Crear(u => u.BloqueadoHasta = Ahora.AddMinutes(-1));
 
-        var resultado = await servicio.VerificarAsync("laura@arrendia.site", Contrasena, CancellationToken.None);
+        var resultado = await servicio.VerificarAsync("laura@correo.sv", Contrasena, CancellationToken.None);
 
         Assert.Equal(ResultadoIngreso.Correcto, resultado.Resultado);
     }
@@ -96,7 +96,7 @@ public class ServicioAccesoTests
             if (caso == "sin-contrasena") { u.PasswordHash = null; }
             if (caso == "sistema") { u.Rol = "Sistema"; }
         });
-        var email = caso == "no-existe" ? "nadie@correo.sv" : "laura@arrendia.site";
+        var email = caso == "no-existe" ? "nadie@correo.sv" : "laura@correo.sv";
 
         var resultado = await servicio.VerificarAsync(email, Contrasena, CancellationToken.None);
 

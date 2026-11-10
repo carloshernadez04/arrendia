@@ -14,7 +14,7 @@ public sealed class OpcionesSmtp
     public int Puerto { get; set; } = 587;
     public string? Usuario { get; set; }
     public string? Contrasena { get; set; }
-    public string Remitente { get; set; } = "cobros@arrendia.site";
+    public string? Remitente { get; set; }
     public string NombreRemitente { get; set; } = "Arrendia";
 
     public bool EstaConfigurado => !string.IsNullOrWhiteSpace(Host);
@@ -39,7 +39,7 @@ public sealed class CorreoSmtp(Microsoft.Extensions.Options.IOptions<OpcionesSmt
     public async Task EnviarAsync(MensajeCorreo mensaje, CancellationToken cancelacion)
     {
         using var correo = new MimeMessage();
-        correo.From.Add(new MailboxAddress(_opciones.NombreRemitente, _opciones.Remitente));
+        correo.From.Add(new MailboxAddress(_opciones.NombreRemitente, string.IsNullOrWhiteSpace(_opciones.Remitente) ? _opciones.Usuario ?? "" : _opciones.Remitente));
         correo.To.Add(MailboxAddress.Parse(mensaje.Destinatario));
         correo.Subject = mensaje.Asunto;
         var cuerpo = new BodyBuilder { HtmlBody = mensaje.Html, TextBody = mensaje.Texto };

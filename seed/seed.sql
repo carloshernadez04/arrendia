@@ -16,7 +16,7 @@ DECLARE @SISTEMA INT = (SELECT ID FROM dbo.USUARIO WHERE ROL = 'Sistema');
 
 IF NOT EXISTS (SELECT 1 FROM dbo.USUARIO WHERE ROL = 'Administrador')
     INSERT INTO dbo.USUARIO (NOMBRE, EMAIL, PASSWORD_HASH, ROL, ACTIVO, CREADO_POR)
-    VALUES (N'Administrador', N'admin@arrendia.site', NULL, 'Administrador', 0, @SISTEMA);
+    VALUES (N'Administrador', N'admin@example.com', NULL, 'Administrador', 0, @SISTEMA);
 
 INSERT INTO dbo.TIPO_UNIDAD (NOMBRE)
 SELECT v.NOMBRE FROM (VALUES (N'Local comercial'), (N'Apartamento'), (N'Oficina'), (N'Bodega'), (N'Casa')) v (NOMBRE)
@@ -55,7 +55,6 @@ SELECT v.CLAVE, v.VALOR, v.TIPO, v.DESCRIPCION, @SISTEMA
 FROM (VALUES ('Empresa.Nombre', N'Nombre de la empresa, S.A. de C.V.', 'Texto', N'Aparece en avisos, comprobantes y contratos'),
              ('Empresa.NIT', N'0000-000000-000-0', 'Texto', N'NIT del arrendante'),
              ('IVA.Porcentaje', N'13', 'Numero', N'IVA de locales y oficinas'),
-             ('Correo.Remitente', N'cobros@arrendia.site', 'Texto', N'Remitente de los avisos de cobro'),
              ('Invitacion.DiasVigencia', N'7', 'Numero', N'Días que dura un enlace de invitación'),
              ('Recuperacion.MinutosVigencia', N'60', 'Numero', N'Minutos que dura el enlace para recuperar la contraseña'),
              ('Tecnico.HorasEnlace', N'48', 'Numero', N'Horas que dura el enlace del técnico'),

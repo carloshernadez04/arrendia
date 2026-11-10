@@ -33,7 +33,6 @@ Estado del proyecto. Marca `[x]` cuando una tarea quede terminada y desplegada e
 - [x] Cargar las llaves de SMTP, Wompi y Cloudinary en el `DOTENV` de cada ambiente
 - [ ] Verificar el dominio en el proveedor SMTP (registros SPF y DKIM en Cloudflare)
 - [ ] Borrar los registros DNS basura en horasvoluntariado.site
-- [ ] Migrar a los dominios `arrendia.site` y `qa.arrendia.site`
 - [ ] Avisos del pipeline en Slack (opcional)
 
 ## Base de datos
